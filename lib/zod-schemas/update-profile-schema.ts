@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { urlPattern } from "@/lib/zod-schemas/URL-REGEX";
 
 export const profileNameTest = z.object({
   name: z
@@ -20,4 +19,27 @@ export const profileWebsiteTest = z.object({
       message: "Please enter a valid URL.",
     })
     .max(1000),
+});
+
+export const profileEmailTest = z.object({
+  email: z
+    .string()
+    .email({ message: "Please enter a valid email address." })
+    .nonempty({ message: "Email address cannot be empty." }),
+});
+
+export const AvatarURLTest = z.object({
+  url: z
+    .string()
+    .url({
+      message: "Please enter a valid URL.",
+    })
+    .min(86)
+    .max(160)
+    .regex(
+      /^https:\/\/lrfapwkpjlxzbddoyeuh\.supabase\.co\/storage\/v1\/object\/public\/(avatars|user_avatars)\/.*/,
+      {
+        message: "URL must start with the expected base path.",
+      }
+    ),
 });

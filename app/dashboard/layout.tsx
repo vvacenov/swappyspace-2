@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
-import { ThemeToggle } from "@/components/theme-toggle/theme-toggle";
+import { SidebarLg } from "@/components/dashboard/sidebar-lg/sidebar-lg-component";
+import { Separator } from "@/components/ui/separator";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -13,8 +14,14 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <section className="flex flex-col">
-      <div className="flex">{children}</div>
+    <section className="relative min-w-full min-h-full mb-4 mt-2 p-2 select-none">
+      <div className="flex w-5/6 max-w-7xl mx-auto h-full gap-6">
+        <nav className="hidden lg:flex lg:w-72 p-2">
+          <SidebarLg />
+        </nav>
+        <Separator orientation="vertical" className="hidden lg:block" />
+        <div className="w-full">{children}</div>
+      </div>
     </section>
   );
 }

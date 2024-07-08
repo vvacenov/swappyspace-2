@@ -40,7 +40,7 @@ function RootLayout({ children }: { children: React.ReactNode }) {
                   <NavbarMainComponent />
                 </nav>
 
-                <section className="flex items-center justify-center mb-8 sm:mb-0 overflow-hidden sm:min-h-[calc(100vh-112px)]">
+                <section className="flex overflow-hidden min-h-[calc(100vh-112px)] mx-auto justify-center">
                   {children}
                 </section>
               </main>

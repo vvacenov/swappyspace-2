@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle/theme-toggle";
-import Profile from "@/components/ui/profile/profile-dropdown-component";
+import Profile from "@/components/profile/profile-dropdown-component";
 import BurgerMenu from "@/components/ui/burger-menu/burger-menu-component";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -49,7 +49,7 @@ export default function NavbarMainComponent() {
   );
 
   return (
-    <div className="w-full max-w-7xl mx-auto flex items-center justify-between px-5 sm:px-6 lg:px-8 h-[104px] mb-2 border-b">
+    <div className="border border-accent select-none w-full max-w-7xl mx-auto flex items-center justify-between px-5 sm:px-6 lg:px-8 h-[104px] mb-2">
       <div className="flex items-center font-semibold w-full">
         <Link href="/">
           <div className="h-16 flex items-center justify-center">
@@ -116,7 +116,7 @@ export default function NavbarMainComponent() {
               <ThemeToggle />
             </li>
           </ul>
-          <ul className="flex gap-x-4 ml-14 lg:hidden items-center w-full">
+          <ul className="flex gap-x-1 ml-14 lg:hidden items-center w-full">
             <li className="ml-auto">
               <BurgerMenu />
             </li>

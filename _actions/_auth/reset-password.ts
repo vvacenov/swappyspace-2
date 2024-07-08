@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { SiteNavigation, baseUrl } from "@/lib/site-navigation/site-navigation";
+import { headers } from "next/headers";
 
 type serverError = {
   error_message: string;
@@ -9,6 +10,8 @@ type serverError = {
 };
 
 export async function resetPwd(formData: FormData) {
+  const ip = await getIp();
+
   let serverError: serverError | null = null;
 
   if (!formData.get("email")) {
@@ -33,4 +36,9 @@ export async function resetPwd(formData: FormData) {
   }
 
   return null;
+}
+
+async function getIp() {
+  const ip = headers().get("x-forwarded-for");
+  return ip;
 }

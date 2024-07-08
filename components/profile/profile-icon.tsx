@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import TailwindSpinner from "../spinner/tailwind-spinner";
+import TailwindSpinner from "../ui/spinner/tailwind-spinner";
 import Image from "next/image";
 import profileIcon from "@/public/logo/swappyspace-round.svg";
 
@@ -14,6 +14,7 @@ export default function ProfileIcon({
   isFetching: boolean;
   data: User | undefined;
 }) {
+  console.log(data?.avatar_url);
   return (
     <Avatar className="hover:cursor-pointer select-none hover:shadow-sm hover:opacity-85 transition-all ease-in duration-100 active:scale-90 active:opacity-85">
       {isFetching && (
@@ -24,7 +25,12 @@ export default function ProfileIcon({
       <AvatarImage className="object-cover" src={data?.avatar_url || ""} />
       {!isFetching && (
         <AvatarFallback className="bg-muted">
-          <Image src={profileIcon} alt="profile"></Image>
+          <Image
+            src={data?.avatar_url || profileIcon}
+            width={110}
+            height={110}
+            alt=""
+          />
         </AvatarFallback>
       )}
     </Avatar>

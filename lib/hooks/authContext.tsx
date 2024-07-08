@@ -14,7 +14,8 @@ interface AuthContextType {
   loggedIn: boolean;
   loading: boolean;
   error: string | null;
-  setLoggedIn: (loggedIn: boolean) => void; // Dodaj ovu liniju
+  setLoggedIn: (loggedIn: boolean) => void;
+  userId: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,6 +26,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -36,6 +38,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setLoggedIn(false);
       } else {
         setLoggedIn(!!data?.session);
+        setUserId(data?.session?.user?.id || null);
       }
     } catch (error) {
       setLoggedIn(false);
@@ -50,7 +53,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }, [checkUser]);
 
   return (
-    <AuthContext.Provider value={{ loggedIn, loading, error, setLoggedIn }}>
+    <AuthContext.Provider
+      value={{ loggedIn, loading, error, setLoggedIn, userId }}
+    >
       {children}
     </AuthContext.Provider>
   );

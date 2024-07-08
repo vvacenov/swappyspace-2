@@ -8,6 +8,7 @@ import { PasswordStrengthRgx } from "@/lib/password-strength/password-strength-r
 import { testEmail } from "@/lib/zod-schemas/signup-zod-schema";
 import { checkEmail } from "./check-user-email";
 import { SiteNavigation } from "@/lib/site-navigation/site-navigation";
+import { headers } from "next/headers";
 
 type serverError = {
   error_message: string;

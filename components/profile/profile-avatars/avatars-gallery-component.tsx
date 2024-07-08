@@ -1,13 +1,14 @@
-import { createClient } from "@/utils/supabase/client";
-import useUser from "@/lib/hooks/useUser";
 import { useReducer, useMemo, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { Button } from "../../button";
-import { Skeleton } from "../../skeleton";
-import TailwindSpinner from "../../spinner/tailwind-spinner";
+import { Button } from "../../ui/button";
+import { Skeleton } from "../../ui/skeleton";
+import TailwindSpinner from "../../ui/spinner/tailwind-spinner";
 import { Repeat } from "lucide-react";
+import { useAuth } from "@/lib/hooks/authContext";
+import { setAvatar } from "@/_actions/_profiles/set-avatar";
+import { useQueryClient } from "@tanstack/react-query";
 
-const MAX_OFFSET = 107;
+const MAX_OFFSET = 104;
 const IMAGES_PER_PAGE = 6;
 
 interface State {
@@ -15,6 +16,11 @@ interface State {
   offset: number;
   isLoading: boolean;
   error: string | null;
+}
+
+interface AvatarGalleryProps {
+  signal_upload: boolean;
+  setSignalUpload: (value: boolean) => void;
 }
 
 type Action =
@@ -50,32 +56,38 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-export default function AvatarGallery() {
-  const user = useUser();
-  const supabase = createClient();
+const AvatarGallery: React.FC<AvatarGalleryProps> = ({
+  signal_upload,
+  setSignalUpload,
+}) => {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
 
   const getImages = useCallback(
     async (newOffset: number) => {
       try {
         dispatch({ type: "FETCH_START" });
 
-        const { data, error } = await supabase.storage
-          .from("avatars")
-          .list("", {
-            limit: IMAGES_PER_PAGE,
-            offset: newOffset < MAX_OFFSET ? newOffset : MAX_OFFSET,
-          });
-        if (error) {
-          dispatch({ type: "FETCH_FAILURE", payload: error.message });
+        const response = await fetch(
+          `/api/getAvatars?offset=${newOffset}&max_offset=${MAX_OFFSET}&img=${userId}`
+        );
+        const result = await response.json();
+
+        if (!response.ok) {
+          dispatch({ type: "FETCH_FAILURE", payload: result.message });
           return;
         }
-        if (data) {
-          const imageNames = data.map((img) => img.name);
-          dispatch({
-            type: "FETCH_SUCCESS",
-            payload: { images: imageNames, offset: newOffset },
-          });
+
+        dispatch({
+          type: "FETCH_SUCCESS",
+          payload: { images: result.images, offset: newOffset },
+        });
+        setSignalUpload(false);
+
+        // Automatski postavi novi avatar ako je signal_upload true
+        if (signal_upload && result.images.length > 0) {
+          handleSetAvatar(result.images[0]);
         }
       } catch (error) {
         dispatch({
@@ -85,7 +97,7 @@ export default function AvatarGallery() {
         });
       }
     },
-    [supabase]
+    [signal_upload]
   );
 
   const retryFetch = useCallback(() => {
@@ -94,20 +106,40 @@ export default function AvatarGallery() {
   }, [getImages]);
 
   useEffect(() => {
+    if (signal_upload) {
+      getImages(0);
+    }
+  }, [signal_upload]);
+
+  useEffect(() => {
     getImages(0);
   }, [getImages]);
 
-  const BASEURL =
-    "https://lrfapwkpjlxzbddoyeuh.supabase.co/storage/v1/object/public/avatars/";
+  useEffect(() => {}, []);
+
   const imgURL = useMemo(() => {
-    return state.images.map((name) => BASEURL + name);
-  }, [state.images, supabase]);
+    return state.images.map((url) => url);
+  }, [state.images]);
 
   // Kreiraj niz Skeleton komponenti
   const skeletonArray = Array.from({ length: IMAGES_PER_PAGE });
 
+  async function handleSetAvatar(url: string) {
+    const { result, serverError } = await setAvatar(url, userId || "");
+    if (serverError) {
+      dispatch({
+        type: "FETCH_FAILURE",
+        payload: serverError.error_message,
+      });
+
+      return;
+    }
+    queryClient.refetchQueries({ queryKey: ["user"] });
+    return;
+  }
+
   return (
-    <div className="flex flex-col items-center mt-2 mb-2">
+    <div className="select-none flex flex-col items-center mt-2 mb-2">
       {state.error && (
         <div className="flex w-[410px] h-[280px] justify-center items-center flex-col gap-4">
           <span className="text-center text-wrap">{state.error}</span>
@@ -121,12 +153,13 @@ export default function AvatarGallery() {
         <div className="grid grid-cols-3 gap-4 mb-2 ">
           {imgURL?.map((url) => (
             <Image
-              className="rounded-md border hover:opacity-85 cursor-pointer"
+              onClick={() => handleSetAvatar(url)}
+              className="rounded-md border hover:opacity-85 cursor-pointer object-contain overflow-hidden min-h-[100px] max-h-[100px] min-w-[100px] max-w-[100px]"
               key={url}
               src={url}
               alt=""
-              width={100}
-              height={100}
+              width={110}
+              height={110}
               priority
             />
           ))}
@@ -168,4 +201,6 @@ export default function AvatarGallery() {
       )}
     </div>
   );
-}
+};
+
+export default AvatarGallery;

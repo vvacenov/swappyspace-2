@@ -13,4 +13,5 @@ export type UserProfileUpdate = {
   avatar_url?: string | null;
   full_name?: string | null;
   website?: string | null;
+  email?: string | null;
 };
