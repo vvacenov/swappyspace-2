@@ -8,124 +8,129 @@ import { PasswordStrengthRgx } from "@/lib/password-strength/password-strength-r
 import { testEmail } from "@/lib/zod-schemas/signup-zod-schema";
 import { checkEmail } from "./check-user-email";
 import { SiteNavigation } from "@/lib/site-navigation/site-navigation";
-import { headers } from "next/headers";
 
-type serverError = {
-  error_message: string;
-  code?: number;
+type ServerError = {
+  message: string;
+  status: number;
+  error: boolean;
 };
 
-const provideValidEmail = "Please, provide a valid email address.";
-const enterEmailPlease = "Email is required.";
-const provideBetterPwd = "Please, create a bit safer password.";
-const bummer = "Error signing you up. :( Try again later.";
-const emailIsTaken = "That email is already taken.";
-const incorrectCreds = "Wrong email or password. Try again.";
-const plsConfirm = "Please, confirm your email first.";
-const bummer2 = "Error signin you in. :( Try again later.";
+const MESSAGES = {
+  invalidEmail: "Please provide a valid email address.",
+  missingEmail: "Email is required.",
+  weakPassword: "Please create a stronger password.",
+  signUpError: "An error occurred during sign up. Please try again later.",
+  emailTaken: "This email is already taken.",
+  invalidCredentials: "Invalid email or password. Please try again.",
+  confirmEmail: "Please confirm your email address first.",
+  signInError: "An error occurred during sign in. Please try again later.",
+};
 
-export async function logIn(formData: FormData) {
-  let serverError: serverError | null = null;
+export async function logIn(formData: FormData): Promise<ServerError | null> {
+  try {
+    const data = {
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+    };
 
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
-  if (!data.email) {
-    serverError = { error_message: enterEmailPlease };
-    return serverError;
-  }
-
-  const emailTest = testEmailInput(data?.email);
-  if (!emailTest) {
-    serverError = { error_message: provideValidEmail };
-    return serverError;
-  }
-
-  const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword(data);
-
-  if (error) {
-    if (error.message === "Invalid login credentials") {
-      serverError = { error_message: incorrectCreds, code: 401 };
-      return serverError;
+    if (!data.email) {
+      return { message: MESSAGES.missingEmail, status: 400, error: true };
     }
-    if (error.message === "Email not confirmed") {
-      serverError = { error_message: plsConfirm };
-      return serverError;
-    } else {
-      serverError = { error_message: bummer2 };
-    }
-    return serverError;
-  }
 
-  revalidatePath("/", "layout");
-  redirect("/dashboard");
+    const emailTest = testEmailInput(data.email);
+    if (!emailTest) {
+      return { message: MESSAGES.invalidEmail, status: 400, error: true };
+    }
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword(data);
+
+    if (error) {
+      const errorMessage = getSignInErrorMessage(error.message);
+      return {
+        message: errorMessage.message,
+        status: errorMessage.status,
+        error: true,
+      };
+    }
+
+    revalidatePath("/", "layout");
+    redirect("/dashboard");
+  } catch (err) {
+    return handleServerError(err);
+  }
 }
 
-export async function signUp(formData: FormData) {
-  let serverError: serverError | null = null;
+export async function signUp(formData: FormData): Promise<ServerError | null> {
+  try {
+    const data = {
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+    };
 
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
+    const emailTest = testEmailInput(data.email);
+    if (!emailTest) {
+      return { message: MESSAGES.invalidEmail, status: 400, error: true };
+    }
 
-  const emailTest = testEmailInput(data?.email);
-  if (!emailTest) {
-    serverError = { error_message: provideValidEmail };
-    return serverError;
+    const passwordTest = testPassword(data.password);
+    if (!passwordTest) {
+      return { message: MESSAGES.weakPassword, status: 400, error: true };
+    }
+
+    const result = await checkEmail(data.email);
+    if ("error" in result && result.error) {
+      return { message: MESSAGES.signUpError, status: 500, error: true };
+    }
+
+    if ("exists" in result && result.exists) {
+      return { message: MESSAGES.emailTaken, status: 409, error: true };
+    }
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signUp(data);
+
+    if (error) {
+      return { message: error.message, status: 500, error: true };
+    }
+
+    cookies().set("emailSent", "true", { path: "/", maxAge: 60 * 5 });
+
+    revalidatePath("/", "layout");
+    redirect(SiteNavigation.confirmEmailSent);
+  } catch (err) {
+    return handleServerError(err);
   }
-
-  const passwordTest = testPassword(data.password);
-  if (!passwordTest) {
-    serverError = { error_message: provideBetterPwd };
-    return serverError;
-  }
-
-  const result = await checkEmail(data.email);
-  if (result?.error) {
-    console.log(result.error);
-    serverError = { error_message: bummer };
-    return serverError;
-  }
-
-  if (result) {
-    serverError = { error_message: emailIsTaken };
-    return serverError;
-  }
-
-  const supabase = createClient();
-  const { error } = await supabase.auth.signUp(data);
-
-  if (error) {
-    serverError = { error_message: error.message };
-    return serverError;
-  }
-  cookies().set("emailSent", "true", { path: "/", maxAge: 60 * 5 });
-
-  revalidatePath("/", "layout");
-  redirect(SiteNavigation.confirmEmailSent);
 }
 
 function testPassword(password: string): boolean {
-  if (
-    !PasswordStrengthRgx.regexLetters.test(password) ||
-    !PasswordStrengthRgx.regexNumbers.test(password) ||
-    !PasswordStrengthRgx.regexSpecialChars.test(password) ||
-    !PasswordStrengthRgx.regexLength.test(password)
-  ) {
-    return false;
-  }
-  return true;
+  return (
+    PasswordStrengthRgx.regexLetters.test(password) &&
+    PasswordStrengthRgx.regexNumbers.test(password) &&
+    PasswordStrengthRgx.regexSpecialChars.test(password) &&
+    PasswordStrengthRgx.regexLength.test(password)
+  );
 }
 
 function testEmailInput(email: string): boolean {
-  const result = testEmail.safeParse({ email: email });
+  const result = testEmail.safeParse({ email });
 
-  if (!result.success) {
-    return false;
+  return result.success;
+}
+
+function getSignInErrorMessage(errorMessage: string) {
+  if (errorMessage === "Invalid login credentials") {
+    return { message: MESSAGES.invalidCredentials, status: 401 };
   }
+  if (errorMessage === "Email not confirmed") {
+    return { message: MESSAGES.confirmEmail, status: 403 };
+  }
+  return { message: MESSAGES.signInError, status: 500 };
+}
 
-  return true;
+function handleServerError(err: unknown): ServerError {
+  if (err instanceof Error) {
+    return { message: err.message, status: 500, error: true };
+  }
+  return { message: "Internal server error", status: 500, error: true };
 }

@@ -3,8 +3,7 @@ import {
   UseQueryResult,
   useQuery,
 } from "@tanstack/react-query";
-import { createClient } from "@/utils/supabase/client";
-import type { User } from "@/utils/types/user";
+import { User } from "@/utils/types/user";
 
 export const emptyUser: User = {
   avatar_url: null,
@@ -17,21 +16,18 @@ export const emptyUser: User = {
   public_id: null,
 };
 
+const fetchUser = async (): Promise<User> => {
+  const response = await fetch("/api/user");
+  if (!response.ok) {
+    throw new Error("Network response was not ok");
+  }
+  const data = await response.json();
+  return data || emptyUser;
+};
+
 export default function useUser(): UseQueryResult<User, Error> {
-  return useQuery({
+  return useQuery<User, Error>({
     queryKey: ["user"],
-    queryFn: async () => {
-      const supabase = await createClient();
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        const { data: user } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", data.user.id)
-          .single();
-        return user || emptyUser;
-      }
-      return emptyUser;
-    },
+    queryFn: fetchUser,
   });
 }

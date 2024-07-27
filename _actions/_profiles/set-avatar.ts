@@ -17,7 +17,6 @@ export async function setAvatar(
   userId: string
 ): Promise<AvatarResponse> {
   try {
-    console.log(url);
     if (!url) {
       return {
         serverError: { error_message: "Invalid URL", code: 400 },

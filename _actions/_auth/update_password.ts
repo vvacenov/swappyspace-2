@@ -3,50 +3,60 @@
 import { createClient } from "@/utils/supabase/server";
 import { PasswordStrengthRgx } from "@/lib/password-strength/password-strength-regex";
 
-type serverError = {
-  error_message: string;
-  code?: number;
+type ServerResponse = {
+  message: string;
+  status: number;
+  error: boolean;
 };
-const provideBetterPwd = "Please, create a bit safer password.";
-const pwdEmpty = "Please, enter a password.";
-const failedToUpdate =
-  "Something went wrong. Unable to update your password. :( Please, contact support.";
 
-export const updatePwd = async (formData: FormData) => {
-  let serverError: serverError | null = null;
-  const password = formData.get("password") as string;
-  if (!password) {
-    serverError = { error_message: pwdEmpty };
-    return serverError;
-  }
+const MESSAGES = {
+  weakPassword: "Please create a stronger password.",
+  emptyPassword: "Please enter a password.",
+  updateFailed:
+    "Something went wrong. Unable to update your password. Please contact support.",
+  updateSuccess: "Password updated successfully.",
+};
 
-  const passwordTest = testPassword(password);
-  if (!passwordTest) {
-    serverError = { error_message: provideBetterPwd };
-    return serverError;
-  }
+export const updatePwd = async (
+  formData: FormData
+): Promise<ServerResponse> => {
+  try {
+    const password = formData.get("password") as string;
 
-  const supabase = createClient();
+    if (!password) {
+      return { message: MESSAGES.emptyPassword, status: 400, error: true };
+    }
 
-  const { error } = await supabase.auth.updateUser({
-    password,
-  });
+    const passwordTest = testPassword(password);
+    if (!passwordTest) {
+      return { message: MESSAGES.weakPassword, status: 400, error: true };
+    }
 
-  if (error) {
-    serverError = { error_message: error.message };
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({ password });
 
-    return serverError;
+    if (error) {
+      return { message: error.message, status: 500, error: true };
+    }
+
+    return { message: MESSAGES.updateSuccess, status: 200, error: false };
+  } catch (err) {
+    return handleServerError(err);
   }
 };
 
 function testPassword(password: string): boolean {
-  if (
-    !PasswordStrengthRgx.regexLetters.test(password) ||
-    !PasswordStrengthRgx.regexNumbers.test(password) ||
-    !PasswordStrengthRgx.regexSpecialChars.test(password) ||
-    !PasswordStrengthRgx.regexLength.test(password)
-  ) {
-    return false;
+  return (
+    PasswordStrengthRgx.regexLetters.test(password) &&
+    PasswordStrengthRgx.regexNumbers.test(password) &&
+    PasswordStrengthRgx.regexSpecialChars.test(password) &&
+    PasswordStrengthRgx.regexLength.test(password)
+  );
+}
+
+function handleServerError(err: unknown): ServerResponse {
+  if (err instanceof Error) {
+    return { message: err.message, status: 500, error: true };
   }
-  return true;
+  return { message: "Internal server error", status: 500, error: true };
 }

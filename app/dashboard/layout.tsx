@@ -14,7 +14,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <section className="relative min-w-full min-h-full mb-4 mt-2 p-2 select-none">
+    <section className="relative min-w-full min-h-full p-2 select-none">
       <div className="flex w-5/6 max-w-7xl mx-auto h-full gap-6">
         <nav className="hidden lg:flex lg:w-72 p-2">
           <SidebarLg />

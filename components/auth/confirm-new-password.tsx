@@ -8,7 +8,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
 import { z } from "zod";
 import { StringPassword } from "@/lib/zod-schemas/zod-password-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,14 +36,13 @@ export default function ChangePasswordComponent() {
     const formData = new FormData();
     formData.set("password", values.password);
     const result = await updatePwd(formData);
-    if (result?.error_message) {
-      setError(result.error_message);
+
+    if (result.error) {
+      setError(result.message);
       setUpdated(false);
-    }
-    if (!result?.error_message) {
+    } else {
       setUpdated(true);
     }
-    console.log(result);
   }
 
   return (
@@ -76,7 +74,7 @@ export default function ChangePasswordComponent() {
         <>
           <CardHeader className="space-y-3">
             <CardTitle className="text-xl">
-              Great! Your password was updated succesfully.
+              Great! Your password was updated successfully.
             </CardTitle>
             <CardDescription></CardDescription>
           </CardHeader>
@@ -86,9 +84,9 @@ export default function ChangePasswordComponent() {
               className="flex items-center gap-3"
             >
               <Button>
-                <span className=" flex items-center gap-2 text-swappy">
+                <span className="flex items-center gap-2 text-swappy">
                   Go to Login Page to sign in
-                  <FaSignInAlt className="text-2xl " />
+                  <FaSignInAlt className="text-2xl" />
                 </span>
               </Button>
             </Link>

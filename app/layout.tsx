@@ -7,6 +7,7 @@ import { Inter as FontSans } from "next/font/google";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/lib/hooks/authContext";
+import { Provider as JotaiAtomProvider } from "jotai";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -35,15 +36,16 @@ function RootLayout({ children }: { children: React.ReactNode }) {
         >
           <AuthProvider>
             <QueryProvider>
-              <main>
-                <nav>
-                  <NavbarMainComponent />
-                </nav>
-
-                <section className="flex overflow-hidden min-h-[calc(100vh-112px)] mx-auto justify-center">
-                  {children}
-                </section>
-              </main>
+              <JotaiAtomProvider>
+                <main className="relative">
+                  <nav className="fixed z-10 top-0 left-0 right-0 overflow-hidden">
+                    <NavbarMainComponent />
+                  </nav>
+                  <section className="z-0 flex overflow-clip min-h-[calc(100vh-112px)] mx-auto justify-center z-500 pt-28">
+                    {children}
+                  </section>
+                </main>
+              </JotaiAtomProvider>
             </QueryProvider>
           </AuthProvider>
         </ThemeProvider>

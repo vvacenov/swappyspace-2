@@ -19,7 +19,7 @@ type Links = {
 };
 
 const sideBarLinks: Links[] = [
-  { name: "Links", href: "/dashboard" },
+  { name: "Links", href: "/dashboard/links" },
   { name: "QR Codes", href: "/dashboard/qr-codes" },
   { name: "Collections", href: "/dashboard/collections" },
   { name: "Cards", href: "/dashboard/cards" },

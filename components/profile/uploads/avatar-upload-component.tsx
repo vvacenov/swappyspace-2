@@ -3,8 +3,8 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "../../ui/button";
 import TailwindSpinner from "../../ui/spinner/tailwind-spinner";
 import { Check, X } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
 import { useAuth } from "@/lib/hooks/authContext";
+import { uploadAvatar } from "@/_actions/_profiles/upload-avatar";
 
 const allowedFileTypes = [
   "image/png",
@@ -68,6 +68,7 @@ function reducer(state: State, action: Action): State {
 interface AvatarGalleryProps {
   setSignalUpload: (value: boolean) => void;
 }
+
 const AvatarUpload: React.FC<AvatarGalleryProps> = ({ setSignalUpload }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { userId } = useAuth();
@@ -88,80 +89,36 @@ const AvatarUpload: React.FC<AvatarGalleryProps> = ({ setSignalUpload }) => {
       return;
     }
 
-    if (!allowedFileTypes.includes(state.image.type)) {
-      dispatch({
-        type: "SET_ERROR",
-        payload: "Only image files can be uploaded.",
-      });
-      dispatch({ type: "SET_UPLOADING", payload: false });
-      return;
-    }
+    const time =
+      (state.image.size <= 524288 && 110) ||
+      (state.image.size > 524288 && state.image.size < 1048576 && 220) ||
+      330;
 
-    if (state.image.size > imageMaxSize) {
-      dispatch({
-        type: "SET_ERROR",
-        payload: "Please, select an image smaller than 2MB in size.",
-      });
-      dispatch({ type: "SET_UPLOADING", payload: false });
-      return;
-    }
+    let progressValue = 0;
+    const interval = setInterval(() => {
+      progressValue = progressValue + Math.round(Math.random() * 10);
+      if (progressValue >= 83) {
+        progressValue = 94; // Simulacija napretka do 94%
+        clearInterval(interval);
+      }
+      dispatch({ type: "SET_PROGRESS", payload: progressValue });
+    }, time);
 
     try {
-      const data = new FormData();
-      data.set("image", state.image);
+      const image = new FormData();
+      image.set("image", state.image);
+      const result = await uploadAvatar(image);
 
-      const newFileName = `avatar-${uuidv4()}`;
-      const time =
-        (state.image.size <= 524288 && 110) ||
-        (state.image.size > 524288 && state.image.size < 1048576 && 220) ||
-        330;
-
-      let progressValue = 0;
-      const interval = setInterval(() => {
-        progressValue = progressValue + Math.round(Math.random() * 10);
-        if (progressValue >= 83) {
-          progressValue = 94; // Simulacija napretka do 94%
-          clearInterval(interval);
-        }
-        dispatch({ type: "SET_PROGRESS", payload: progressValue });
-      }, time);
-
-      const response = await fetch("/api/upload_avatar", {
-        method: "POST",
-        body: data,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        clearInterval(interval);
-        dispatch({ type: "SET_PROGRESS", payload: 0 }); // Resetiranje napretka u slučaju greške
-        dispatch({
-          type: "SET_ERROR",
-          payload: result.message || "Error uploading file.",
-        });
-        dispatch({ type: "SET_UPLOADING", payload: false });
+      if (result.error) {
+        dispatch({ type: "SET_ERROR", payload: result.message });
         dispatch({ type: "SET_UPLOAD_ERR", payload: true });
-
+        dispatch({ type: "SET_UPLOADING", payload: false });
         return;
       }
 
-      clearInterval(interval);
-      dispatch({ type: "SET_PROGRESS", payload: 100 }); // Postavljanje napretka na 100% nakon uspješnog odgovora
-      dispatch({ type: "SET_UPLOADING", payload: false });
+      dispatch({ type: "SET_PROGRESS", payload: 100 });
       dispatch({ type: "SET_UPLOAD_DONE", payload: true });
-      dispatch({ type: "SET_UPLOAD_ERR", payload: false });
-
-      // Delete old avatar
-      const deleteResponse = await fetch("/api/delete_avatar", {
-        method: "POST",
-        body: JSON.stringify({ userId, newFileName }),
-      });
-
-      if (!deleteResponse.ok) {
-        console.error("Error deleting old avatar");
-      }
-
+      dispatch({ type: "SET_UPLOADING", payload: false });
       setSignalUpload(true);
     } catch (err: any) {
       dispatch({ type: "SET_UPLOAD_ERR", payload: true });
@@ -174,7 +131,7 @@ const AvatarUpload: React.FC<AvatarGalleryProps> = ({ setSignalUpload }) => {
         });
       }
       dispatch({ type: "SET_UPLOADING", payload: false });
-      dispatch({ type: "SET_PROGRESS", payload: 0 }); // Resetiranje napretka u slučaju greške
+      dispatch({ type: "SET_PROGRESS", payload: 0 });
     }
   };
 
@@ -196,6 +153,10 @@ const AvatarUpload: React.FC<AvatarGalleryProps> = ({ setSignalUpload }) => {
     dispatch({ type: "SET_DRAG_ACTIVE", payload: false });
     const files = e.dataTransfer.files;
     if (files && files[0]) {
+      if (!allowedFileTypes.includes(files[0].type)) {
+        dispatch({ type: "SET_ERROR", payload: "Only image format allowed." });
+        return;
+      }
       dispatch({ type: "SET_FILE", payload: files[0] });
       dispatch({ type: "SET_ERROR", payload: null });
       dispatch({ type: "SET_UPLOAD_DONE", payload: false });
@@ -227,13 +188,18 @@ const AvatarUpload: React.FC<AvatarGalleryProps> = ({ setSignalUpload }) => {
             <input
               type="file"
               name="image"
-              accept="image/*"
+              accept={allowedFileTypes.join(",")}
               className="hidden"
               onChange={(e) => {
-                dispatch({
-                  type: "SET_FILE",
-                  payload: e.target.files?.[0] || null,
-                });
+                const file = e.target.files?.[0] || null;
+                if (file && !allowedFileTypes.includes(file.type)) {
+                  dispatch({
+                    type: "SET_ERROR",
+                    payload: "Only image format allowed.",
+                  });
+                  return;
+                }
+                dispatch({ type: "SET_FILE", payload: file });
                 dispatch({ type: "SET_ERROR", payload: null });
                 dispatch({ type: "SET_UPLOAD_DONE", payload: false });
                 dispatch({ type: "SET_PROGRESS", payload: 0 });
@@ -282,11 +248,7 @@ const AvatarUpload: React.FC<AvatarGalleryProps> = ({ setSignalUpload }) => {
           <Progress value={state.progress} />
         </div>
       )}
-      {!state.uploading && state.uploadErr && (
-        <div className="flex flex-col gap-2 items-center justify-center w-full mt-2">
-          <Progress value={state.progress} className="bg-red-500" />{" "}
-        </div>
-      )}
+
       {state.error && (
         <div className="flex h-auto flex-col items-center justify-center">
           <div className="text-red-500 text-xs w-full mt-2 text-center">

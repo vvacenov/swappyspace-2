@@ -17,7 +17,7 @@ const ThemedLogo = dynamic(
       <div className="flex items-center justify-center w-[125px] h-[37px]">
         <TailwindSpinner />
       </div>
-    ), // Dodan fallback spinner dok se komponenta učitava
+    ),
   }
 );
 import { Button } from "@/components/ui/button";
@@ -60,8 +60,9 @@ export default function ForgotPasswordComponent() {
     formData.set("email", values.email);
     setEmail(values.email);
     const result = await resetPwd(formData);
-    if (result?.error_message) {
-      setError(result.error_message);
+
+    if (result.error) {
+      setError(result.message);
       setEmailSent(false);
       setIsSubmitting(false);
     } else {
@@ -83,11 +84,13 @@ export default function ForgotPasswordComponent() {
     }
     formData.set("email", email);
     const result = await resetPwd(formData);
-    if (result?.error_message) {
-      setError(result.error_message);
+
+    if (result.error) {
+      setError(result.message);
       setResend(false);
       return;
     }
+
     setResend(false);
     startCountdown();
   }

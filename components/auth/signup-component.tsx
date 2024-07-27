@@ -39,7 +39,7 @@ export default function SignupComponent() {
 
   const [submitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const onSubmit = async (values: z.infer<typeof signupZodSchema>) => {
     try {
@@ -48,94 +48,102 @@ export default function SignupComponent() {
       formData.set("email", values.email);
       formData.set("password", values.password);
       const result = await signUp(formData);
-      if (result?.error_message) {
-        setIsSubmitting(false);
-        setError(result.error_message);
-        return;
-      }
-      if (!result?.error_message) {
-        setSuccess(true);
+
+      if (result && result.error) {
+        setError(result.message);
         setIsSubmitting(false);
         return;
       }
+
+      setSuccess(true);
+      setIsSubmitting(false);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        return;
+        setError("An unknown error occurred.");
       }
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <>
-      <Card className="w-full shadow">
-        <CardHeader>
-          <div className="flex flex-col mb-7 w-full justify-center text-xl items-center">
-            <span>Sign up for Free</span>
-            <span className="text-sm">
-              Create an account using email and password
-            </span>
-          </div>
-        </CardHeader>
+    <Card className="w-full shadow">
+      <CardHeader>
+        <div className="flex flex-col mb-7 w-full justify-center text-xl items-center">
+          <span>Sign up for Free</span>
+          <span className="text-sm">
+            Create an account using email and password
+          </span>
+        </div>
+      </CardHeader>
 
-        <CardContent>
-          <FormProvider {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-4 w-full"
-            >
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Email</Label>
-                    <FormControl>
-                      <Input placeholder="Enter your email" {...field} />
-                    </FormControl>
-                    {form.formState.errors.email ? (
-                      <FormMessage />
-                    ) : (
-                      <div className="h-5"></div>
-                    )}
-                  </FormItem>
-                )}
-              />
-              <PasswordField />
-              {success ? (
-                <div>Check your email!</div>
-              ) : (
-                <>
-                  {!submitting ? (
-                    <Button className="w-full" type="submit">
-                      <span>Create free account</span>
-                    </Button>
+      <CardContent>
+        <FormProvider {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 w-full"
+            noValidate
+          >
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <Label htmlFor="email">Email</Label>
+                  <FormControl>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      {...field}
+                      aria-invalid={!!form.formState.errors.email}
+                      aria-describedby="email-error"
+                    />
+                  </FormControl>
+                  {form.formState.errors.email ? (
+                    <FormMessage id="email-error" role="alert">
+                      {form.formState.errors.email.message}
+                    </FormMessage>
                   ) : (
-                    <Button className="w-full" type="submit" disabled>
-                      <TailwindSpinner />
-                    </Button>
+                    <div className="h-5" id="email-error"></div>
                   )}
-                  <div className="h-5 text-sm text-red-600">
-                    <span>{error}</span>
-                  </div>
-                </>
+                </FormItem>
               )}
-            </form>
-          </FormProvider>
-        </CardContent>
-        <CardFooter>
-          <CardDescription className="flex gap-2">
-            <span className="mb-6">Already have an account?</span>
-            <Link
-              className="underline hover:text-primary"
-              href={SiteNavigation.logIn}
-            >
-              Log in here
-            </Link>
-          </CardDescription>
-        </CardFooter>
-      </Card>
-    </>
+            />
+            <PasswordField />
+            {success ? (
+              <div>Check your email!</div>
+            ) : (
+              <>
+                {!submitting ? (
+                  <Button className="w-full" type="submit">
+                    <span>Create free account</span>
+                  </Button>
+                ) : (
+                  <Button className="w-full" type="submit" disabled>
+                    <TailwindSpinner />
+                  </Button>
+                )}
+                <div className="h-5 text-sm text-red-600">
+                  <span>{error}</span>
+                </div>
+              </>
+            )}
+          </form>
+        </FormProvider>
+      </CardContent>
+      <CardFooter>
+        <CardDescription className="flex gap-2">
+          <span className="mb-6">Already have an account?</span>
+          <Link
+            className="underline hover:text-primary"
+            href={SiteNavigation.logIn}
+          >
+            Log in here
+          </Link>
+        </CardDescription>
+      </CardFooter>
+    </Card>
   );
 }

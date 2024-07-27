@@ -53,7 +53,7 @@ export default function LoginComponent() {
 
   const [submitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const onSubmit = async (values: z.infer<typeof loginZodSchema>) => {
     try {
@@ -62,24 +62,25 @@ export default function LoginComponent() {
       formData.set("email", values.email);
       formData.set("password", values.password);
       const result = await logIn(formData);
-      if (result?.error_message) {
-        setIsSubmitting(false);
-        setError(result.error_message);
-        return;
-      }
-      if (!result?.error_message) {
-        setSuccess(true);
+
+      if (result && result.error) {
+        setError(result.message);
         setIsSubmitting(false);
         return;
       }
+
+      setSuccess(true);
+      setIsSubmitting(false);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        return;
+        setError("An unknown error occurred.");
       }
+      setIsSubmitting(false);
     }
   };
+
   return (
     <Card className="w-full shadow">
       <CardHeader className="flex pb-0">
@@ -92,21 +93,29 @@ export default function LoginComponent() {
           <GitHubLoginComponent />
           <HoverCard>
             <HoverCardTrigger>
-              <Info className="text-xl" />
+              <Info className="text-xl" aria-label="Information" />
             </HoverCardTrigger>
-            <HoverCardContent className=" flex flex-col gap-3 text-sm">
+            <HoverCardContent className="flex flex-col gap-3 text-sm">
               <span>Don't have an account? Let's keep it simple.</span>
               <span>
                 Your first login with Google, Discord or Github will create one
-                for you automatically.{" "}
+                for you automatically.
               </span>
             </HoverCardContent>
           </HoverCard>
+          {/* Screen Reader Only Text */}
+          <div className="sr-only">
+            <span>Don't have an account? Let's keep it simple.</span>
+            <span>
+              Your first login with Google, Discord or Github will create one
+              for you automatically.
+            </span>
+          </div>
         </div>
         <div className="relative flex py-5 items-center">
           <div className="flex-grow border-t"></div>
-          <span className="flex-shrink mx-4 ">OR</span>
-          <div className="flex-grow border-t "></div>
+          <span className="flex-shrink mx-4">OR</span>
+          <div className="flex-grow border-t"></div>
         </div>
       </CardHeader>
       <CardDescription className="flex mx-12 justify-center mt-0 mb-2 text-sm">
@@ -120,19 +129,24 @@ export default function LoginComponent() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <Label>Email</Label>
+                  <Label htmlFor="email">Email</Label>
                   <FormControl>
-                    <Input placeholder="Enter your email" {...field} />
+                    <Input
+                      id="email"
+                      placeholder="Enter your email"
+                      {...field}
+                      aria-invalid={!!form.formState.errors.email}
+                      aria-describedby="email-error"
+                    />
                   </FormControl>
                   {form.formState.errors.email ? (
-                    <FormMessage />
+                    <FormMessage id="email-error" role="alert" />
                   ) : (
-                    <div className="h-5"></div>
+                    <div className="h-5" id="email-error"></div>
                   )}
                 </FormItem>
               )}
             />
-
             <PasswordField />
             {success ? (
               <div>Check your email!</div>
@@ -152,7 +166,7 @@ export default function LoginComponent() {
                   </div>
                 )}
                 <CardDescription className="text-sm flex flex-col gap-3 justify-between">
-                  <span className=" h-5 text-red-600">{error}</span>
+                  <span className="h-5 text-red-600">{error}</span>
                   <Link
                     className="underline"
                     href={SiteNavigation.forgotPassword}

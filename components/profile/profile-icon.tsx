@@ -14,9 +14,8 @@ export default function ProfileIcon({
   isFetching: boolean;
   data: User | undefined;
 }) {
-  console.log(data?.avatar_url);
   return (
-    <Avatar className="hover:cursor-pointer select-none hover:shadow-sm hover:opacity-85 transition-all ease-in duration-100 active:scale-90 active:opacity-85">
+    <Avatar className="border border-muted hover:cursor-pointer select-none hover:shadow-sm hover:opacity-85 transition-all ease-in duration-100 active:scale-90 active:opacity-85">
       {isFetching && (
         <AvatarFallback className="bg-muted">
           <TailwindSpinner />

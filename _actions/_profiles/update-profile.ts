@@ -22,7 +22,7 @@ export async function updateUserProfile(
   updates: UserProfileUpdate
 ): Promise<ProfileUpdateResponse> {
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
 
     if (!userData?.user) {

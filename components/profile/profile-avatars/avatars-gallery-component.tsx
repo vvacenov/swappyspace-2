@@ -1,12 +1,13 @@
-import { useReducer, useMemo, useEffect, useCallback } from "react";
+import { useReducer, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { Button } from "../../ui/button";
-import { Skeleton } from "../../ui/skeleton";
-import TailwindSpinner from "../../ui/spinner/tailwind-spinner";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import TailwindSpinner from "@/components/ui/spinner/tailwind-spinner";
 import { Repeat } from "lucide-react";
 import { useAuth } from "@/lib/hooks/authContext";
 import { setAvatar } from "@/_actions/_profiles/set-avatar";
 import { useQueryClient } from "@tanstack/react-query";
+import { getAvatars } from "@/_actions/_profiles/get-avatar";
 
 const MAX_OFFSET = 104;
 const IMAGES_PER_PAGE = 6;
@@ -66,16 +67,28 @@ const AvatarGallery: React.FC<AvatarGalleryProps> = ({
 
   const getImages = useCallback(
     async (newOffset: number) => {
+      if (!userId) {
+        dispatch({
+          type: "FETCH_FAILURE",
+          payload: "User ID is required",
+        });
+        return;
+      }
+
       try {
         dispatch({ type: "FETCH_START" });
+        const result = await getAvatars(newOffset, userId);
 
-        const response = await fetch(
-          `/api/getAvatars?offset=${newOffset}&max_offset=${MAX_OFFSET}&img=${userId}`
-        );
-        const result = await response.json();
+        if (result.error) {
+          dispatch({
+            type: "FETCH_FAILURE",
+            payload: result.message || "An error occurred",
+          });
+          return;
+        }
 
-        if (!response.ok) {
-          dispatch({ type: "FETCH_FAILURE", payload: result.message });
+        if (!result.images) {
+          dispatch({ type: "FETCH_FAILURE", payload: "No images found" });
           return;
         }
 
@@ -85,7 +98,6 @@ const AvatarGallery: React.FC<AvatarGalleryProps> = ({
         });
         setSignalUpload(false);
 
-        // Automatski postavi novi avatar ako je signal_upload true
         if (signal_upload && result.images.length > 0) {
           handleSetAvatar(result.images[0]);
         }
@@ -97,7 +109,7 @@ const AvatarGallery: React.FC<AvatarGalleryProps> = ({
         });
       }
     },
-    [signal_upload]
+    [signal_upload, userId, setSignalUpload]
   );
 
   const retryFetch = useCallback(() => {
@@ -109,19 +121,12 @@ const AvatarGallery: React.FC<AvatarGalleryProps> = ({
     if (signal_upload) {
       getImages(0);
     }
-  }, [signal_upload]);
+  }, [signal_upload, getImages]);
 
   useEffect(() => {
     getImages(0);
   }, [getImages]);
 
-  useEffect(() => {}, []);
-
-  const imgURL = useMemo(() => {
-    return state.images.map((url) => url);
-  }, [state.images]);
-
-  // Kreiraj niz Skeleton komponenti
   const skeletonArray = Array.from({ length: IMAGES_PER_PAGE });
 
   async function handleSetAvatar(url: string) {
@@ -135,7 +140,6 @@ const AvatarGallery: React.FC<AvatarGalleryProps> = ({
       return;
     }
     queryClient.refetchQueries({ queryKey: ["user"] });
-    return;
   }
 
   return (
@@ -151,7 +155,7 @@ const AvatarGallery: React.FC<AvatarGalleryProps> = ({
       )}
       {!state.isLoading && !state.error && (
         <div className="grid grid-cols-3 gap-4 mb-2 ">
-          {imgURL?.map((url) => (
+          {state.images.map((url) => (
             <Image
               onClick={() => handleSetAvatar(url)}
               className="rounded-md border hover:opacity-85 cursor-pointer object-contain overflow-hidden min-h-[100px] max-h-[100px] min-w-[100px] max-w-[100px]"
