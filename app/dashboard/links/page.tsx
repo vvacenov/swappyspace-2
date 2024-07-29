@@ -12,7 +12,7 @@ export default function LinksPage() {
       >
         <div className="pr-8">
           <CreateLinksParentComponent />
-          <Suspense>
+          <Suspense> {/* fallback={ to Do, not yet created} */}
             <GetLinksSSR />
           </Suspense>
         </div>
