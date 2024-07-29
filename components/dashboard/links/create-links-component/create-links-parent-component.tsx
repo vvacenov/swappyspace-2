@@ -6,7 +6,7 @@ import { useState, useReducer, Suspense } from "react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { CreateLinksComponent } from "@/components/dashboard/links/create-links-component/create-link-component";
 
-enum STATE_ACTIONS {
+export enum STATE_ACTIONS {
   SET_ERROR = "SET_ERROR",
   CLEAR_ERROR = "CLEAR_ERROR",
   SET_URLS = "SET_URLS",
@@ -101,6 +101,7 @@ export default function CreateLinksParentComponent() {
               state={state}
               dispatch={dispatch}
               setIsOpen={setIsOpen}
+              STATE_ACTIONS={STATE_ACTIONS}
             />
           </CollapsibleContent>
         </Collapsible>

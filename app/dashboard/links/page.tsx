@@ -10,7 +10,7 @@ export default function LinksPage() {
         content="control"
         className="h-[calc(100vh-152px)] rounded-md"
       >
-        <div className="p-2 pr-8">
+        <div className="p-2 lg:pr-8">
           <CreateLinksParentComponent />
           <Suspense>
             {/* Suspense fallback={ this is yet to be created} */}

@@ -43,7 +43,7 @@ export async function getLinks(): Promise<Link[]> {
     }
 
     const encodedLinks: Link[] = linksData.map((link: SupabaseLink) => ({
-      id: SHORTENER_BASEURL + EncodeShortURL(Number(link.id)),
+      id: EncodeShortURL(Number(link.id)),
       url_long: link.url_long,
       created_at: link.created_at ? link.created_at : "", // Ensure created_at is a string
     }));

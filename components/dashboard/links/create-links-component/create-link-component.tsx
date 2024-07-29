@@ -1,13 +1,14 @@
 "use client";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
 import { urlTest } from "@/lib/zod-schemas/url-zod-schema-simple";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormMessage,
@@ -30,50 +31,45 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Clipboard, Edit2, Trash2, LucideQrCode, TagIcon } from "lucide-react";
 import TailwindSpinner from "@/components/ui/spinner/tailwind-spinner";
-import { createShortUrl } from "@/_actions/_links/create-short-url"; // Importiraj server akciju
-import { useQueryClient } from "@tanstack/react-query";
+import { createShortUrl } from "@/_actions/_links/create-short-url";
 import Link from "next/link";
-import TagsComponent from "../../link-tags/create-tags-component";
-import { useState } from "react";
+import TagsComponent from "@/components/dashboard/link-tags/tags-component";
+import { useToast } from "@/components/ui/use-toast";
+import { STATE_ACTIONS } from "@/components/dashboard/links/create-links-component/create-links-parent-component";
 
-const formSchema = urlTest;
+const formSchema = urlTest.extend({
+  antibot: z.string(),
+});
 
-enum STATE_ACTIONS {
-  SET_ERROR = "SET_ERROR",
-  CLEAR_ERROR = "CLEAR_ERROR",
-  SET_URLS = "SET_URLS",
-  CLEAR_URLS = "CLEAR_URLS",
-  SET_CREATING = "SET_CREATING",
-  CLEAR_CREATING = "CLEAR_CREATING",
-
-  RESET_STATE = "RESET_STATE",
-}
-
-type State = {
-  error: string | null;
-  long_url: string | null;
-  short_url: string | null;
-  is_creating_url: boolean;
-};
-
-type REDUCER_ACTION = {
-  type: STATE_ACTIONS;
-  payload?: Partial<State>;
-};
-
-interface LinksComponentProps {
-  state: State;
-  dispatch: React.Dispatch<REDUCER_ACTION>;
-  setIsOpen: (value: boolean) => void;
+interface CreateLinksComponentProps {
+  state: {
+    error: string | null;
+    long_url: string | null;
+    short_url: string | null;
+    is_creating_url: boolean;
+  };
+  dispatch: React.Dispatch<{
+    type: STATE_ACTIONS;
+    payload?: Partial<{
+      error: string | null;
+      long_url: string | null;
+      short_url: string | null;
+      is_creating_url: boolean;
+    }>;
+  }>;
+  setIsOpen: (isOpen: boolean) => void;
+  STATE_ACTIONS: typeof STATE_ACTIONS;
 }
 
 export function CreateLinksComponent({
   state,
   dispatch,
   setIsOpen,
-}: LinksComponentProps) {
+  STATE_ACTIONS,
+}: CreateLinksComponentProps) {
+  const [creatingTags, setCreatingTags] = useState(false);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [creatingTags, setIsCreatingTags] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -83,10 +79,26 @@ export function CreateLinksComponent({
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    dispatch({ type: STATE_ACTIONS.CLEAR_URLS });
-    dispatch({ type: STATE_ACTIONS.SET_CREATING });
+  const createUrlMutation = useMutation({
+    mutationFn: createShortUrl,
+    onSuccess: (data) => {
+      dispatch({
+        type: STATE_ACTIONS.SET_URLS,
+        payload: {
+          short_url: data.message,
+          long_url: form.getValues().long_url,
+        },
+      });
+    },
+    onError: (error: Error) => {
+      dispatch({
+        type: STATE_ACTIONS.SET_ERROR,
+        payload: { error: error.message },
+      });
+    },
+  });
 
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     if (values.antibot) {
       dispatch({
         type: STATE_ACTIONS.SET_ERROR,
@@ -100,23 +112,33 @@ export function CreateLinksComponent({
       testURL = `https://${testURL}`;
     }
 
-    const result = await createShortUrl(testURL);
-
-    if (result.error) {
-      dispatch({
-        type: STATE_ACTIONS.SET_ERROR,
-        payload: { error: result.message },
-      });
-      return;
-    }
-
-    dispatch({
-      type: STATE_ACTIONS.SET_URLS,
-      payload: { long_url: testURL, short_url: result.message },
-    });
-    dispatch({ type: STATE_ACTIONS.CLEAR_CREATING });
-    dispatch({ type: STATE_ACTIONS.CLEAR_ERROR });
+    dispatch({ type: STATE_ACTIONS.SET_CREATING });
+    createUrlMutation.mutate(testURL);
   }
+
+  const handleCopyLink = () => {
+    if (state.short_url) {
+      navigator.clipboard.writeText(state.short_url);
+      toast({
+        title: "Copied!",
+        description: "Link copied to clipboard.",
+      });
+    }
+  };
+
+  const handleEdit = () => {
+    // Implement edit functionality
+    // This could open a modal or change the component state to allow editing
+    console.log("Edit functionality not implemented yet");
+  };
+
+  const handleDelete = () => {
+    dispatch({ type: STATE_ACTIONS.RESET_STATE });
+    toast({
+      title: "Deleted",
+      description: "Link has been deleted.",
+    });
+  };
 
   return (
     <div>
@@ -127,19 +149,25 @@ export function CreateLinksComponent({
               <div className="select-text flex items-center text-base justify-center lg:justify-normal">
                 <span className="hidden lg:block min-w-24">Short link:</span>
                 <Link
-                  id="short link"
-                  href={"http://" + state.short_url}
-                  className=" text-swappy cursor-pointer hover:underline active:opacity-50 text-xl px-8"
+                  href={state.short_url}
+                  className="text-swappy cursor-pointer hover:underline active:opacity-50 text-xl px-8"
+                  aria-label={`Short link: ${state.short_url}`}
                 >
                   {state.short_url}
                 </Link>
-                <span className="sr-only">Short link: {state.short_url}</span>
               </div>
               <div className="flex gap-4 px-4 lg:px-0 justify-center lg:justify-normal">
                 <TooltipProvider>
                   <Tooltip>
-                    <TooltipTrigger>
-                      <Clipboard className="hover:text-swappy active:opacity-50 cursor-pointer bg-muted p-1 rounded w-9 h-9" />
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleCopyLink}
+                        aria-label="Copy to clipboard"
+                      >
+                        <Clipboard className="hover:text-swappy active:opacity-50 cursor-pointer bg-muted p-1 rounded w-9 h-9" />
+                      </Button>
                     </TooltipTrigger>
                     <TooltipContent
                       side="bottom"
@@ -152,8 +180,15 @@ export function CreateLinksComponent({
 
                 <TooltipProvider>
                   <Tooltip>
-                    <TooltipTrigger>
-                      <Edit2 className="hover:text-swappy active:opacity-50 cursor-pointer bg-muted  p-1 rounded w-9 h-9" />
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleEdit}
+                        aria-label="Edit link"
+                      >
+                        <Edit2 className="hover:text-swappy active:opacity-50 cursor-pointer bg-muted p-1 rounded w-9 h-9" />
+                      </Button>
                     </TooltipTrigger>
                     <TooltipContent
                       side="bottom"
@@ -163,10 +198,18 @@ export function CreateLinksComponent({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+
                 <TooltipProvider>
                   <Tooltip>
-                    <TooltipTrigger>
-                      <Trash2 className="hover:text-swappy active:opacity-50 cursor-pointer bg-muted  p-1 rounded w-9 h-9" />
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleDelete}
+                        aria-label="Delete link"
+                      >
+                        <Trash2 className="hover:text-swappy active:opacity-50 cursor-pointer bg-muted p-1 rounded w-9 h-9" />
+                      </Button>
                     </TooltipTrigger>
                     <TooltipContent
                       side="bottom"
@@ -183,7 +226,7 @@ export function CreateLinksComponent({
           <CardContent className="flex pt-4 pb-2">
             <div className="font-semibold w-full select-text flex items-center text-sm text-wrap break-words overflow-hidden mb-2 lg:space-x-4 justify-center lg:justify-normal">
               <span className="hidden lg:block min-w-24">Destination:</span>
-              <div className="max-w-[320px] lg:max-w-full select-text cursor-pointer hover:underline active:opacity-50 px-6 lg:px-4 line-clamp-2 lg:line-clamp-1 overflow-hidden">
+              <div className="select-text cursor-pointer hover:underline active:opacity-50 px-6 lg:px-4 line-clamp-1 overflow-hidden">
                 {state.long_url}
               </div>
             </div>
@@ -193,8 +236,15 @@ export function CreateLinksComponent({
           <CardContent className="flex flex-col lg:flex-row items-center text-sm gap-12 py-2 my-2">
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger>
-                  <LucideQrCode className="w-16 h-16 p-2 bg-swappy/50 rounded-md hover:bg-swappy" />
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-16 h-16 p-2 bg-swappy/50 rounded-md hover:bg-swappy"
+                    aria-label="Create QR Code"
+                  >
+                    <LucideQrCode className="w-12 h-12" />
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="border font-semibold">
                   <p>Create a QR Code</p>
@@ -208,7 +258,7 @@ export function CreateLinksComponent({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger
-                        onClick={() => setIsCreatingTags(!creatingTags)}
+                        onClick={() => setCreatingTags(!creatingTags)}
                         className="flex justify-center h-8 items-center"
                       >
                         <div className="flex gap-2 justify-center items-center hover:text-swappy hover:underline font-semibold">
@@ -232,12 +282,25 @@ export function CreateLinksComponent({
           </CardContent>
           {creatingTags && (
             <CardContent>
-              <Separator />{" "}
-              <div className="mt-8">
-                <TagsComponent />
+              <Separator />
+              <div className="pt-4">
+                <TagsComponent linkId={state.short_url} />
               </div>
             </CardContent>
           )}
+          <Separator />
+          <CardFooter className="flex items-center justify-center pt-4">
+            <Button
+              className="w-1/3"
+              onClick={() => {
+                dispatch({ type: STATE_ACTIONS.RESET_STATE });
+                setIsOpen(false);
+                queryClient.invalidateQueries({ queryKey: ["links"] });
+              }}
+            >
+              Done
+            </Button>
+          </CardFooter>
         </Card>
       ) : (
         <Form {...form}>
@@ -247,31 +310,18 @@ export function CreateLinksComponent({
               name="long_url"
               render={({ field }) => (
                 <FormItem>
-                  <Label>Destination Link</Label>
+                  <Label htmlFor="long_url">Destination Link</Label>
                   <FormControl>
                     <Input
                       {...field}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        dispatch({ type: STATE_ACTIONS.CLEAR_ERROR });
-                      }}
+                      id="long_url"
                       type="text"
                       className="bg-muted"
                       placeholder="https://"
+                      aria-describedby="long_url-error"
                     />
                   </FormControl>
-
-                  {form.formState.errors.long_url ? (
-                    <FormMessage className="min-h-6 mt-1 text-swappy">
-                      {form.formState.errors.long_url.message}
-                    </FormMessage>
-                  ) : state.error ? (
-                    <FormMessage className="min-h-6 mt-1 text-swappy">
-                      <p>{state.error}</p>
-                    </FormMessage>
-                  ) : (
-                    <div className="min-h-6 mt-1 text-swappy"></div>
-                  )}
+                  <FormMessage id="long_url-error" />
                 </FormItem>
               )}
             />
@@ -280,11 +330,16 @@ export function CreateLinksComponent({
               name="antibot"
               render={({ field }) => (
                 <FormItem className="hidden">
-                  <Label>Confirm</Label>
+                  <Label htmlFor="antibot">Confirm</Label>
                   <FormControl>
-                    <Input type="text" className="bg-muted" {...field} />
+                    <Input
+                      {...field}
+                      id="antibot"
+                      type="text"
+                      className="bg-muted"
+                      aria-hidden="true"
+                    />
                   </FormControl>
-                  <FormDescription className="text-xs">Hm...</FormDescription>
                 </FormItem>
               )}
             />
