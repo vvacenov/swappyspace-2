@@ -1,21 +1,10 @@
 URL Shortener project
 
 
+# This is a personal learning project, will try my best to push it to production
 
+# Features NextJS, Supabase (using both for the first time) and to be hosted on swappyspace.com + swppy.io domain for short URL's.
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+-- It's in early stages. I'm working on this in my spare time, since a full time job is in the way. :)
 
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
+Insipred by bitly.com, linktr.ee and dub.sh
