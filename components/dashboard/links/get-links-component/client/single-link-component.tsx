@@ -28,8 +28,8 @@ interface Props {
 export default function SingleLinkComponent({ data }: Props) {
   const queryClient = useQueryClient();
   return (
-    <div className="p-2">
-      <Card className="h-36 mb-6 border shadow-md">
+    <div className="pr-8">
+      <Card className="h-36 mb-6  border-muted border-2 shadow-md">
         <CardHeader className="pt-4 pb-2">
           <CardTitle className="flex justify-between">
             <div className="select-text flex  items-center text-base">

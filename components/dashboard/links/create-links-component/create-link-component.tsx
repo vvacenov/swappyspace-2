@@ -28,12 +28,12 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Clipboard, Edit2, Trash2, LucideQrCode } from "lucide-react";
+import { Clipboard, Edit2, Trash2, LucideQrCode, TagIcon } from "lucide-react";
 import TailwindSpinner from "@/components/ui/spinner/tailwind-spinner";
 import { createShortUrl } from "@/_actions/_links/create-short-url"; // Importiraj server akciju
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import TagsComponent from "./create-tags-component";
+import TagsComponent from "../../link-tags/create-tags-component";
 import { useState } from "react";
 
 const formSchema = urlTest;
@@ -180,17 +180,17 @@ export function CreateLinksComponent({
             </CardTitle>
           </CardHeader>
           <Separator />
-          <CardContent className="flex  pt-4 pb-2">
+          <CardContent className="flex pt-4 pb-2">
             <div className="font-semibold w-full select-text flex items-center text-sm text-wrap break-words overflow-hidden mb-2 lg:space-x-4 justify-center lg:justify-normal">
               <span className="hidden lg:block min-w-24">Destination:</span>
-              <div className="select-text cursor-pointer hover:underline active:opacity-50 px-6 lg:px-4 line-clamp-1 overflow-hidden">
+              <div className="max-w-[320px] lg:max-w-full select-text cursor-pointer hover:underline active:opacity-50 px-6 lg:px-4 line-clamp-2 lg:line-clamp-1 overflow-hidden">
                 {state.long_url}
               </div>
             </div>
           </CardContent>
 
           <Separator />
-          <CardFooter className="flex flex-col lg:flex-row items-center text-sm gap-12 py-2 my-2">
+          <CardContent className="flex flex-col lg:flex-row items-center text-sm gap-12 py-2 my-2">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
@@ -203,34 +203,41 @@ export function CreateLinksComponent({
             </TooltipProvider>
 
             <div className="w-full flex justify-between">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <div className="px-4">
-                      <TagsComponent />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="bottom"
-                    className="border font-semibold"
-                  >
-                    <span className="flex flex-col">
-                      <p>Click to add tags.</p>
-                    </span>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <Button
-                onClick={() => {
-                  dispatch({ type: STATE_ACTIONS.RESET_STATE });
-                  setIsOpen(false);
-                  queryClient.invalidateQueries({ queryKey: ["links"] });
-                }}
-              >
-                Done
-              </Button>
+              <div className="flex items-center flex-col lg:flex-row justify-between w-full">
+                <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger
+                        onClick={() => setIsCreatingTags(!creatingTags)}
+                        className="flex justify-center h-8 items-center"
+                      >
+                        <div className="flex gap-2 justify-center items-center hover:text-swappy hover:underline font-semibold">
+                          <TagIcon className="w-4 h-4" />
+                          <span>Tags:</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        className="border font-semibold"
+                      >
+                        <span className="flex flex-col">
+                          <p>Click to add tags.</p>
+                        </span>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
             </div>
-          </CardFooter>
+          </CardContent>
+          {creatingTags && (
+            <CardContent>
+              <Separator />{" "}
+              <div className="mt-8">
+                <TagsComponent />
+              </div>
+            </CardContent>
+          )}
         </Card>
       ) : (
         <Form {...form}>

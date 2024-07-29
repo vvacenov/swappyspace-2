@@ -49,7 +49,7 @@ export default function NavbarMainComponent() {
   );
 
   return (
-    <div className=" bg-popover border-b border-muted select-none w-full max-w-7xl mx-auto flex items-center justify-between px-5 sm:px-6 lg:px-8 h-[104px] mb-2 shadow-md">
+    <div className=" bg-popover border-b border-muted select-none w-full max-w-7xl mx-auto flex items-center justify-between px-5 sm:px-6 lg:px-8 h-[104px] shadow-md">
       <div className="flex items-center font-semibold w-full">
         <Link href="/">
           <div className="h-16 flex items-center justify-center">

@@ -48,3 +48,35 @@
     --ring: 240 4.9% 83.9%;
   }
 }
+.custom-scroll::-webkit-scrollbar {
+  width: 10px; /* Tanji scrollbar */
+  max-height: 33%; /* Niži scrollbar */
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(107, 114, 128, 0.33); /* Default shadcn boja */
+  border-radius: 10px;
+  cursor: pointer;
+
+  min-height: 60px; /* Minimalna visina rukohvata skrol trake */
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(
+    75,
+    85,
+    99,
+    0.66
+  ); /* Hover efekat sa tamnijom shadcn bojom */
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent; /* Prozirna pozadina trake */
+  border-radius: 10px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.custom-scroll::-webkit-scrollbar-corner {
+  background: transparent; /* Prozirni uglovi */
+}

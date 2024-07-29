@@ -34,7 +34,7 @@ export function SidebarLg() {
   const pathname = usePathname();
 
   return (
-    <div className="w-full h-full select-none">
+    <div className="w-full h-full select-none pt-8">
       <ul className="flex flex-col w-full gap-1 text-sm">
         {sideBarLinks.map((link) => (
           <Link key={link.name} className="w-full h-full" href={link.href}>

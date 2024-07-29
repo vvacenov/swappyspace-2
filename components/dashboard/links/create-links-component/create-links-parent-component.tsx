@@ -76,7 +76,7 @@ export default function CreateLinksParentComponent() {
   };
 
   return (
-    <div className="w-full h-full p-2">
+    <div className="w-full h-full pr-8 pt-8">
       <div className="flex justify-between items-center mb-8">
         <Button
           onClick={toggleCollapsible}

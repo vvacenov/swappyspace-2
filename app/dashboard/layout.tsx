@@ -16,7 +16,7 @@ export default function DashboardLayout({
   return (
     <section className="relative min-w-full min-h-full p-2 select-none">
       <div className="flex w-5/6 max-w-7xl mx-auto h-full gap-6">
-        <nav className="hidden lg:flex lg:w-72 p-2">
+        <nav className="hidden lg:flex lg:w-72 ">
           <SidebarLg />
         </nav>
         <Separator orientation="vertical" className="hidden lg:block" />

@@ -41,7 +41,7 @@ function RootLayout({ children }: { children: React.ReactNode }) {
                   <nav className="fixed z-10 top-0 left-0 right-0 overflow-hidden">
                     <NavbarMainComponent />
                   </nav>
-                  <section className="z-0 flex overflow-clip min-h-[calc(100vh-112px)] mx-auto justify-center z-500 pt-28">
+                  <section className="z-0 flex overflow-clip min-h-[calc(100vh-112px)] mx-auto justify-center z-500 pt-24">
                     {children}
                   </section>
                 </main>

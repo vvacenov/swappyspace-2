@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { X, Check } from "lucide-react";
 
 const formSchema = z.object({
   tag: tagSchema,
@@ -30,12 +31,12 @@ export default function TagsComponent() {
   const [tags, setTags] = useState<string[]>([]);
 
   const onSubmit = (values: { tag: string }) => {
-    setTags([...tags, values.tag]);
+    setTags((prevTags) => [...prevTags, values.tag]);
     form.reset();
   };
 
   return (
-    <div>
+    <div className="flex flex-col justify-center w-full">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -45,33 +46,36 @@ export default function TagsComponent() {
             control={form.control}
             name="tag"
             render={({ field }) => (
-              <FormItem>
-                <Label htmlFor="tag-input">Enter Tag</Label>
-                <FormControl>
+              <FormItem className="flex flex-col lg:flex-row items-center w-full justify-center gap-8 m-0">
+                <Label htmlFor="tag-input" className="sr-only">
+                  Tag
+                </Label>
+                <FormControl className="flex max-w-96">
                   <Input
                     {...field}
                     id="tag-input"
                     aria-invalid={form.formState.errors.tag ? "true" : "false"}
                     aria-describedby="tag-error"
-                    placeholder="Enter tag and press Enter"
+                    placeholder="Enter tag"
                   />
                 </FormControl>
-                <FormMessage id="tag-error">
-                  {form.formState.errors.tag?.message}
-                </FormMessage>
+                <Button type="submit" className="flex m-0">
+                  Add Tag
+                </Button>
               </FormItem>
             )}
           />
-          <Button type="submit">Add Tag</Button>
         </form>
+        <FormMessage id="tag-error">
+          {form.formState.errors.tag?.message}
+        </FormMessage>
       </Form>
-      <div>
-        <h2>Tags:</h2>
-        <ul>
+      <div className="mt-4">
+        <ul className="flex flex-wrap gap-2 mt-2 items-center justify-center">
           {tags.map((tag, index) => (
             <li
               key={index}
-              className="bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded"
+              className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded"
             >
               {tag}
             </li>
