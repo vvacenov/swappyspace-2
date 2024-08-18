@@ -7,7 +7,11 @@ import { DecodeShortURL } from "@/lib/URLs/shorten-url";
 const MAX_TAGS = 5;
 const MAX_TAG_LENGTH = 30;
 
-const tagSchema = z.string().min(1).max(MAX_TAG_LENGTH);
+const tagSchema = z
+  .string()
+  .min(1, "Tag cannot be empty")
+  .max(MAX_TAG_LENGTH, `Tag must be ${MAX_TAG_LENGTH} characters or less`)
+  .regex(/^[a-zA-Z0-9]+$/, "Tag can only contain letters and numbers");
 
 export async function getTagsForLink(linkId: string) {
   try {
@@ -33,8 +37,7 @@ export async function updateTags(linkId: string, tags: string[]) {
     const supabase = createClient();
     const linkIdLocal = DecodeShortURL(linkId);
 
-    // Validate and clean tags
-    const validTags = Array.from(new Set(tags)) // Remove duplicates
+    const validTags = Array.from(new Set(tags))
       .filter((tag) => {
         try {
           tagSchema.parse(tag);
@@ -45,7 +48,6 @@ export async function updateTags(linkId: string, tags: string[]) {
       })
       .slice(0, MAX_TAGS);
 
-    // Additional backend validation
     if (validTags.some((tag) => tag.length > MAX_TAG_LENGTH)) {
       throw new Error(
         `One or more tags exceed the maximum length of ${MAX_TAG_LENGTH} characters.`
@@ -58,7 +60,6 @@ export async function updateTags(linkId: string, tags: string[]) {
       );
     }
 
-    // Update tags
     const { data, error } = await supabase
       .from("url")
       .update({ tags: validTags })
@@ -66,6 +67,7 @@ export async function updateTags(linkId: string, tags: string[]) {
       .select();
 
     if (error) throw new Error("Failed to update tags");
+    console.log(data);
     return data;
   } catch (error) {
     console.error("Error in updateTags:", error);
@@ -75,15 +77,14 @@ export async function updateTags(linkId: string, tags: string[]) {
     throw new Error("Unable to update tags. Please try again.");
   }
 }
+
 export async function addTag(linkId: string, newTag: string) {
   try {
     const supabase = createClient();
     const linkIdLocal = DecodeShortURL(linkId);
 
-    // Validate new tag
     tagSchema.parse(newTag);
 
-    // Fetch current tags
     const { data: currentData, error: fetchError } = await supabase
       .from("url")
       .select("tags")
@@ -94,20 +95,16 @@ export async function addTag(linkId: string, newTag: string) {
 
     const currentTags = currentData.tags || [];
 
-    // Check if tag already exists
     if (currentTags.includes(newTag)) {
       throw new Error("This tag already exists for this link.");
     }
 
-    // Check if max tags limit is reached
     if (currentTags.length >= MAX_TAGS) {
       throw new Error(`Maximum number of tags (${MAX_TAGS}) reached.`);
     }
 
-    // Add new tag
     const newTags = [...currentTags, newTag];
 
-    // Update tags
     const { data, error } = await supabase
       .from("url")
       .update({ tags: newTags })
@@ -115,6 +112,7 @@ export async function addTag(linkId: string, newTag: string) {
       .select();
 
     if (error) throw new Error("Failed to add tag");
+    console.log(data);
     return data;
   } catch (error) {
     console.error("Error in addTag:", error);
@@ -130,7 +128,6 @@ export async function removeTag(linkId: string, tagToRemove: string) {
     const supabase = createClient();
     const linkIdLocal = DecodeShortURL(linkId);
 
-    // Fetch current tags
     const { data: currentData, error: fetchError } = await supabase
       .from("url")
       .select("tags")
@@ -141,10 +138,12 @@ export async function removeTag(linkId: string, tagToRemove: string) {
 
     const currentTags = currentData.tags || [];
 
-    // Remove the tag
+    if (!currentTags.includes(tagToRemove)) {
+      throw new Error("This tag does not exist for this link.");
+    }
+
     const newTags = currentTags.filter((tag: string) => tag !== tagToRemove);
 
-    // Update tags
     const { data, error } = await supabase
       .from("url")
       .update({ tags: newTags })
@@ -159,5 +158,75 @@ export async function removeTag(linkId: string, tagToRemove: string) {
       throw error;
     }
     throw new Error("Unable to remove tag. Please try again.");
+  }
+}
+
+export async function getAllTags() {
+  try {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from("url")
+      .select("tags")
+      .not("tags", "is", null);
+
+    if (error) throw new Error("Failed to fetch tags");
+
+    const allTags = Array.from(
+      new Set(data.flatMap((item) => item.tags || []))
+    );
+
+    return allTags;
+  } catch (error) {
+    console.error("Error in getAllTags:", error);
+    throw new Error("Unable to load all tags. Please try again later.");
+  }
+}
+
+export async function searchLinksByTag(tag: string) {
+  try {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from("url")
+      .select("*")
+      .contains("tags", [tag]);
+
+    if (error) throw new Error("Failed to search links by tag");
+
+    return data;
+  } catch (error) {
+    console.error("Error in searchLinksByTag:", error);
+    throw new Error("Unable to search links by tag. Please try again later.");
+  }
+}
+
+export async function getMostUsedTags(limit: number = 10) {
+  try {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from("url")
+      .select("tags")
+      .not("tags", "is", null);
+
+    if (error) throw new Error("Failed to fetch tags");
+
+    const tagCounts = data
+      .flatMap((item) => item.tags || [])
+      .reduce((acc, tag) => {
+        acc[tag] = (acc[tag] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+    const mostUsedTags = Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([tag]) => tag);
+
+    return mostUsedTags;
+  } catch (error) {
+    console.error("Error in getMostUsedTags:", error);
+    throw new Error("Unable to get most used tags. Please try again later.");
   }
 }

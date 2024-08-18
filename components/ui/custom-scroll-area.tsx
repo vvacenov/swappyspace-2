@@ -8,13 +8,13 @@ const CustomScrollArea = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "relative overflow-hidden h-full w-full custom-scroll",
+      "relative overflow-hidden h-full w-full custom-scroll responsive-scroll-area",
       className
     )}
     {...props}
   >
     <div className="h-full w-full overflow-x-auto overflow-y-auto custom-scroll">
-      <div className="flex flex-col min-w-0">{children}</div>
+      <div className="flex flex-col min-w-0 lg:pr-2">{children}</div>
     </div>
   </div>
 ));

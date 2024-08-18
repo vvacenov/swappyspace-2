@@ -3,7 +3,8 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "../../ui/button";
 import TailwindSpinner from "../../ui/spinner/tailwind-spinner";
 import { Check, X } from "lucide-react";
-import { useAuth } from "@/lib/hooks/authContext";
+import { useAtomValue } from "jotai";
+import { userIdAtom } from "@/lib/atoms/auth";
 import { uploadAvatar } from "@/_actions/_profiles/upload-avatar";
 
 const allowedFileTypes = [
@@ -71,7 +72,7 @@ interface AvatarGalleryProps {
 
 const AvatarUpload: React.FC<AvatarGalleryProps> = ({ setSignalUpload }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { userId } = useAuth();
+  const userId = useAtomValue(userIdAtom);
 
   const handleOnSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

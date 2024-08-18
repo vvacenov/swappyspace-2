@@ -2,7 +2,6 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { EncodeShortURL } from "@/lib/URLs/shorten-url";
-import { SHORTENER_BASEURL } from "@/lib/URLs/shortener_base_url";
 
 interface Link {
   id: string;
@@ -16,7 +15,13 @@ interface SupabaseLink {
   created_at: string | null;
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function getLinks(): Promise<Link[]> {
+  // await sleep(4000);
+
   try {
     const supabase = createClient();
     const { data: user_data, error: auth_error } =

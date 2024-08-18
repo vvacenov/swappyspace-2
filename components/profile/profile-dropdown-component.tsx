@@ -24,10 +24,14 @@ import { updateUserProfile } from "@/_actions/_profiles/update-profile";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import TailwindSpinner from "../ui/spinner/tailwind-spinner";
 import AvatarGallery from "./profile-avatars/avatars-gallery-component";
-import { useAuth } from "@/lib/hooks/authContext";
+
 import AvatarUpload from "@/components/profile/uploads/avatar-upload-component";
 import ProfileFallbackImage from "@/public/logo/swappyspace-round.svg";
 import Image from "next/image";
+
+import { useSetAtom } from "jotai";
+import { loggedInAtom } from "@/lib/atoms/auth";
+
 // Define the state and action types
 interface State {
   isEditing: boolean;
@@ -86,7 +90,7 @@ function reducer(state: State, action: Action): State {
 }
 
 const Profile: React.FC = () => {
-  const { setLoggedIn } = useAuth();
+  const setLoggedIn = useSetAtom(loggedInAtom);
   const { isFetching, data, error: fetchError } = useUser();
   const queryClient = useQueryClient();
 

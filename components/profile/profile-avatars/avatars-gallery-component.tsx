@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import TailwindSpinner from "@/components/ui/spinner/tailwind-spinner";
 import { Repeat } from "lucide-react";
-import { useAuth } from "@/lib/hooks/authContext";
+import { useAtomValue } from "jotai";
+import { userIdAtom } from "@/lib/atoms/auth";
 import { setAvatar } from "@/_actions/_profiles/set-avatar";
 import { useQueryClient } from "@tanstack/react-query";
 import { getAvatars } from "@/_actions/_profiles/get-avatar";
@@ -62,7 +63,7 @@ const AvatarGallery: React.FC<AvatarGalleryProps> = ({
   setSignalUpload,
 }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { userId } = useAuth();
+  const userId = useAtomValue(userIdAtom);
   const queryClient = useQueryClient();
 
   const getImages = useCallback(

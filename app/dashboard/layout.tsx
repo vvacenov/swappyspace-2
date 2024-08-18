@@ -14,14 +14,14 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <section className="relative min-w-full min-h-full p-2 select-none">
-      <div className="flex w-5/6 max-w-7xl mx-auto h-full gap-6">
-        <nav className="hidden lg:flex lg:w-72 ">
+    <div className="min-w-full lg:p-2 select-none flex justify-center">
+      <div className="flex lg:w-5/6 max-w-7xl h-full justify-center ">
+        <nav className="hidden lg:flex lg:w-72 pr-6">
           <SidebarLg />
         </nav>
         <Separator orientation="vertical" className="hidden lg:block" />
-        <div className="w-full">{children}</div>
+        <div className="w-full px-2 lg:pl-12 lg:pr-0">{children}</div>
       </div>
-    </section>
+    </div>
   );
 }

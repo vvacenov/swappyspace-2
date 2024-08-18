@@ -1,6 +1,5 @@
 "use client";
 
-import useUser from "@/lib/hooks/useUser";
 import { Separator } from "@/components/ui/separator";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -30,7 +29,6 @@ const analyticsLinks: Links[] = [
 ];
 
 export function SidebarLg() {
-  const { isFetching, data, error: fetchError } = useUser();
   const pathname = usePathname();
 
   return (

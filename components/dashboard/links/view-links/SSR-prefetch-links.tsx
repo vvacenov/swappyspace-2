@@ -3,8 +3,9 @@ import {
   HydrationBoundary,
   QueryClient,
 } from "@tanstack/react-query";
-import PrefetchedLinks from "@/components/dashboard/links/get-links-component/client/prefetched-links-component";
+
 import { getLinks } from "@/_actions/_links/get-urls";
+import PrefetchedLinks from "./prefetched-links";
 
 export default async function GetLinksSSR() {
   const queryClient = new QueryClient();

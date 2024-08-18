@@ -1,43 +1,29 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { EncodeShortURL, testURL } from "@/lib/URLs/shorten-url";
+import { EncodeShortURL } from "@/lib/URLs/shorten-url";
 import { SHORTENER_BASEURL } from "@/lib/URLs/shortener_base_url";
+import { z } from "zod";
 
-export async function createShortUrl(long_url: string) {
+const inputSchema = z.object({
+  long_url: z.string().url("Please enter a valid URL"),
+  antibot: z.string().max(0, "Bot detection triggered"),
+});
+
+export async function createShortUrl(formData: FormData) {
+  const long_url = formData.get("long_url") as string;
+  const antibot = formData.get("antibot") as string;
+
   try {
-    if (!long_url) {
-      return {
-        message: "Empty request.",
-        status: 400,
-        error: true,
-      };
-    }
-
-    const urlTest = testURL(long_url);
-    if (!urlTest) {
-      return {
-        message: "Input is not a valid URL.",
-        status: 400,
-        error: true,
-      };
-    }
+    const validatedInput = inputSchema.parse({ long_url, antibot });
 
     const supabase = createClient();
     const { data: user_data, error: auth_error } =
       await supabase.auth.getUser();
 
-    if (auth_error) {
+    if (auth_error || !user_data?.user?.id) {
       return {
-        message: auth_error.message,
-        status: 401,
-        error: true,
-      };
-    }
-
-    if (!user_data?.user?.id) {
-      return {
-        message: "Please, log in. Session expired",
+        message: "Authentication failed. Please log in and try again.",
         status: 401,
         error: true,
       };
@@ -45,82 +31,65 @@ export async function createShortUrl(long_url: string) {
 
     const userId = user_data.user.id;
 
-    // Provjeri postoji li zapis u tabeli counter za korisnika
+    // Provjeri korisnikov counter
     const { data: counterData, error: counterError } = await supabase
       .from("counter")
       .select("*")
       .eq("user_id", userId)
       .single();
 
-    if (counterError && counterError.code !== "PGRST116") {
-      // PGRST116: row not found
+    if (counterError) {
+      console.error("Counter error:", counterError);
       return {
-        message: counterError.message,
+        message:
+          "An error occurred while processing your request. Please try again.",
         status: 500,
         error: true,
       };
     }
 
-    if (counterData && counterData.remaining_links <= 0) {
+    if (counterData.remaining_links <= 0) {
       return {
-        message: `You have reached the maximum number of links.`,
+        message:
+          "You've reached the maximum number of allowed links. Please upgrade your account to create more.",
         status: 403,
         error: true,
       };
     }
 
-    // Umetni novi URL i dohvati podatke o unosu
+    // Umetni novi URL
     const { error: insertError, data: insertData } = await supabase
       .from("url")
       .insert({
-        url_long: long_url,
+        url_long: validatedInput.long_url,
         owned_by: userId,
       })
       .select();
 
     if (insertError) {
+      console.error("Insert error:", insertError);
       return {
-        message: insertError.message,
+        message: "Failed to create short URL. Please try again later.",
         status: 500,
         error: true,
       };
     }
 
-    // Ako je ovo prvi link korisnika, kreiraj zapis u tabeli counter
-    if (!counterData) {
-      const remainingLinks = 24; // free korisnik počinje sa 25 linkova, jedan je već korišten
-      const { error: counterInsertError } = await supabase
-        .from("counter")
-        .insert({
-          user_id: userId,
-          user_type: "free",
-          remaining_links: remainingLinks,
-        });
+    // Ažuriraj remaining_links
+    const { error: updateError } = await supabase
+      .from("counter")
+      .update({ remaining_links: counterData.remaining_links - 1 })
+      .eq("user_id", userId);
 
-      if (counterInsertError) {
-        return {
-          message: counterInsertError.message,
-          status: 500,
-          error: true,
-        };
-      }
-    } else {
-      // Ažuriraj preostale linkove
-      const { error: updateError } = await supabase
-        .from("counter")
-        .update({ remaining_links: counterData.remaining_links - 1 })
-        .eq("user_id", userId);
-
-      if (updateError) {
-        return {
-          message: updateError.message,
-          status: 500,
-          error: true,
-        };
-      }
+    if (updateError) {
+      console.error("Counter update error:", updateError);
+      return {
+        message:
+          "Short URL created, but failed to update your account. Please try again later",
+        error: true,
+      };
     }
 
-    // Enkodiraj ID u kratki URL
     const hash = EncodeShortURL(insertData[0].id);
 
     return {
@@ -129,18 +98,18 @@ export async function createShortUrl(long_url: string) {
       error: false,
     };
   } catch (err) {
-    if (err instanceof Error) {
+    console.error("Unexpected error:", err);
+    if (err instanceof z.ZodError) {
       return {
-        message: err.message,
-        status: 500,
-        error: true,
-      };
-    } else {
-      return {
-        message: "Internal server error",
-        status: 500,
+        message: err.errors[0].message,
+        status: 400,
         error: true,
       };
     }
+    return {
+      message: "An unexpected error occurred. Please try again later.",
+      status: 500,
+      error: true,
+    };
   }
 }

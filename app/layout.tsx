@@ -4,11 +4,11 @@ import { ThemeProvider } from "@/lib/theme-provider/theme-provider";
 import { QueryProvider } from "../lib/react-query-provider/react-query-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { Provider as JotaiAtomProvider } from "jotai";
-import NavbarMainComponent from "@/components/navbar/navbar-main-component.tsx/navbar-main-component";
 import { Inter as FontSans } from "next/font/google";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
-import { AuthProvider } from "@/lib/hooks/authContext";
+import { JotaiAuthInitializer } from "@/components/auth/jotai-auth-initializer/JotaiAuthInitializer";
+import NavbarWrapper from "@/components/navbar/navbar-main-component.tsx/navbar-wrapper";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -35,22 +35,24 @@ function RootLayout({ children }: { children: React.ReactNode }) {
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <QueryProvider>
-              <JotaiAtomProvider>
+          <QueryProvider>
+            <JotaiAtomProvider>
+              <JotaiAuthInitializer>
                 <main className="relative">
+                  <div className="z-20">
+                    <Toaster />
+                  </div>
                   <nav className="fixed z-10 top-0 left-0 right-0 overflow-hidden">
-                    <NavbarMainComponent />
+                    <NavbarWrapper />
                   </nav>
 
-                  <section className="z-0 flex overflow-clip min-h-[calc(100vh-112px)] mx-auto justify-center z-500 pt-24">
+                  <section className="z-0 flex overflow-clip min-h-screen mx-auto justify-center z-500 pt-24">
                     {children}
-                    <Toaster />
                   </section>
                 </main>
-              </JotaiAtomProvider>
-            </QueryProvider>
-          </AuthProvider>
+              </JotaiAuthInitializer>
+            </JotaiAtomProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

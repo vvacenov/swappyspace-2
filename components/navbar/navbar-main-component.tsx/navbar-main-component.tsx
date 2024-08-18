@@ -14,7 +14,8 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Info } from "lucide-react";
-import { useAuth } from "@/lib/hooks/authContext";
+import { loggedInAtom, loadingAtom, errorAtom } from "@/lib/atoms/auth";
+import { useAtom, useAtomValue } from "jotai";
 
 const ThemedLogo = dynamic(() => import("../../ui/themed-logo/logo"), {
   ssr: false,
@@ -40,7 +41,9 @@ const linksLoggedIn: Links[] = [
 const linksLoggedOut: Links[] = [{ name: "About", href: "/about" }];
 
 export default function NavbarMainComponent() {
-  const { loggedIn, loading, error } = useAuth();
+  const loggedIn = useAtomValue(loggedInAtom);
+  const loading = useAtomValue(loadingAtom);
+  const error = useAtomValue(errorAtom);
   const pathname = usePathname();
 
   const links = useMemo(

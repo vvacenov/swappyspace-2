@@ -1,23 +1,28 @@
-import CreateLinksParentComponent from "@/components/dashboard/links/create-links-component/create-links-parent-component";
-import GetLinksSSR from "@/components/dashboard/links/get-links-component/SSR-prefecth/get-links-ssr-component";
+import CreateLinkComponent from "@/components/dashboard/links/create-link/create-link-component";
+import SuspenseLinks from "@/components/dashboard/links/Suspense/suspense-links";
+import GetLinksSSR from "@/components/dashboard/links/view-links/SSR-prefetch-links";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Suspense } from "react";
-import { CustomScrollArea } from "@/components/ui/custom-scroll-area";
 
 export default function LinksPage() {
   return (
-    <div>
-      <CustomScrollArea
-        content="control"
-        className="h-[calc(100vh-152px)] rounded-md"
-      >
-        <div className="p-2 lg:pr-8">
-          <CreateLinksParentComponent />
-          <Suspense>
-            {/* Suspense fallback={ this is yet to be created} */}
-            <GetLinksSSR />
-          </Suspense>
-        </div>
-      </CustomScrollArea>
-    </div>
+    <Tabs
+      defaultValue="oldLinks"
+      className="w-screen lg:w-full pt-6 px-2 md:px-8 lg:px-0"
+    >
+      <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsTrigger value="newLink">Create New Link</TabsTrigger>
+        <TabsTrigger value="oldLinks">View Your Links</TabsTrigger>
+      </TabsList>
+      <TabsContent value="newLink">
+        <CreateLinkComponent />
+      </TabsContent>
+      <TabsContent value="oldLinks">
+        <Suspense fallback={<SuspenseLinks />}>
+          <GetLinksSSR />
+        </Suspense>
+      </TabsContent>
+    </Tabs>
   );
 }

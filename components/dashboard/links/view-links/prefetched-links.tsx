@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getLinks } from "@/_actions/_links/get-urls";
 import SingleLinkComponent from "./single-link-component";
+import { CustomScrollArea } from "@/components/ui/custom-scroll-area";
 
 export default function PrefetchedLinks() {
   const { data, error, isLoading } = useQuery({
@@ -23,10 +24,12 @@ export default function PrefetchedLinks() {
   }
 
   return (
-    <div>
-      {data.map((link) => (
-        <SingleLinkComponent key={link.id} data={link} />
-      ))}
-    </div>
+    <CustomScrollArea className="h-[calc(100vh-226px)]">
+      <div className="flex flex-col gap-8 pb-2">
+        {data.map((link) => (
+          <SingleLinkComponent key={link.id} data={link} />
+        ))}
+      </div>
+    </CustomScrollArea>
   );
 }

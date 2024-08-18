@@ -8,7 +8,16 @@ import { ReactNode, useState } from "react";
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
     () =>
-      new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } })
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: Infinity,
+            refetchOnMount: false,
+            refetchOnWindowFocus: false,
+            refetchInterval: Infinity,
+          },
+        },
+      })
   );
   return (
     <QueryClientProvider client={queryClient}>
