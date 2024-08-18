@@ -8,7 +8,7 @@ import { Suspense } from "react";
 export default function LinksPage() {
   return (
     <Tabs
-      defaultValue="oldLinks"
+      defaultValue="newLink"
       className="w-screen lg:w-full pt-6 px-2 md:px-8 lg:px-0"
     >
       <TabsList className="grid w-full grid-cols-2 mb-6">

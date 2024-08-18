@@ -1,5 +1,4 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import TailwindSpinner from "@/components/ui/spinner/tailwind-spinner";
 
 const SkeletonArmy = () => {
   return (

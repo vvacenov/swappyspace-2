@@ -18,7 +18,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { X, Clipboard } from "lucide-react";
+import { X, Clipboard, LucideQrCode, QrCodeIcon } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -27,6 +27,16 @@ import {
 } from "@/components/ui/tooltip";
 import TagsComponent from "../tags/tags-component";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+import CreateQrComponent from "../../QR-code/create-qr-component";
 
 const formSchema = urlTest.extend({
   antibot: z.string(),
@@ -133,9 +143,15 @@ export default function CreateLinkComponent() {
               onClick={() => {
                 resetCreated();
               }}
-              className="absolute top-2 right-2 w-12 h-12 text-muted-foreground border-muted-foreground border rounded-full p-1 hover:bg-muted cursor-pointer"
+              className="absolute top-2 right-2 w-12 h-12 text-muted-foreground border-muted-foreground border-2 rounded-full p-1 hover:bg-muted cursor-pointer"
             />
-            <CardHeader>
+            <CardContent className="py-6 lg:py-0 lg:pb-8">
+              <div>
+                <QrCodeIcon className="min-w-14 min-h-14 p-1 border-2 border-muted-foreground rounded-md cursor-pointer text-muted-foreground hover:bg-muted"></QrCodeIcon>
+              </div>
+            </CardContent>
+
+            <CardContent>
               <div className="grid grid-cols-1 lg:grid-cols-[auto,1fr] gap-4 lg:gap-8 items-center">
                 <span className="font-semibold min-w-32 text-muted-foreground">
                   Short link:{" "}
@@ -181,7 +197,7 @@ export default function CreateLinkComponent() {
                   </TooltipProvider>
                 </div>
               </div>
-            </CardHeader>
+            </CardContent>
             <Separator />
             <CardContent className="px-6 py-0">
               <div className="grid grid-cols-1 lg:grid-cols-[auto,1fr] gap-4 lg:gap-8 items-center py-8">
@@ -206,7 +222,7 @@ export default function CreateLinkComponent() {
               </div>
             </CardContent>
             <Separator />
-            <CardFooter className="py-12 rounded-xl mt-8 border-none w-full">
+            <CardFooter className="py-12 rounded-xl border-none w-full">
               <TagsComponent linkId={state.short_url} />
             </CardFooter>
           </div>
