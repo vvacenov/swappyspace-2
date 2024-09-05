@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { v4 as uuidv4 } from "uuid";
 import { headers } from "next/headers";
 import { rateLimiter } from "@/lib/rate-limit/ratelimiter";
+import xss from "xss";
 
 const allowedFileTypes = [
   "image/png",
@@ -55,8 +56,8 @@ export async function uploadAvatar(
     };
   }
 
+  const supabase = createClient();
   try {
-    const supabase = createClient();
     const { data, error } = await supabase.auth.getUser();
 
     if (error) {
@@ -72,7 +73,7 @@ export async function uploadAvatar(
       };
     }
 
-    const userId = data.user.id;
+    const userId = xss(data.user.id); // Sanitiziraj userId
     const newFileName = `avatar-${uuidv4()}`;
 
     const { error: uploadError } = await supabase.storage

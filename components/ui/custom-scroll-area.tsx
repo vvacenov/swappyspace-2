@@ -14,7 +14,7 @@ const CustomScrollArea = React.forwardRef<
     {...props}
   >
     <div className="h-full w-full overflow-x-auto overflow-y-auto custom-scroll">
-      <div className="flex flex-col min-w-0 lg:pr-2">{children}</div>
+      <div className="flex flex-col min-w-0 lg:pr-4">{children}</div>
     </div>
   </div>
 ));

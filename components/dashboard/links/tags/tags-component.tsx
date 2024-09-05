@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTags } from "@/lib/hooks/useTagsHook";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
@@ -15,12 +15,12 @@ import {
   TagIcon,
   Save,
   XCircle,
-  ChevronDown,
-  ChevronUp,
+  PlusCircle,
+  MinusCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { getTagsForLink, updateTags } from "@/_actions/_links/manage-tags";
+import { updateTags } from "@/_actions/_links/manage-tags";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Collapsible,
@@ -60,12 +60,13 @@ export default function TagsComponent({ linkId }: TagsComponentProps) {
     defaultValues: { tags: "" },
   });
 
-  const { tags, isLoading } = useTags(linkId);
+  const { tags, isLoading, error: errorLoadingTags } = useTags(linkId);
 
   const updateTagsMutation = useMutation({
     mutationFn: (newTags: string[]) => updateTags(cleanLinkId, newTags),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tags", cleanLinkId] });
+
       setIsOpen(false);
       toast({
         title: "Success",
@@ -185,29 +186,29 @@ export default function TagsComponent({ linkId }: TagsComponentProps) {
       onOpenChange={setIsOpen}
       className="w-full text-muted-foreground"
     >
-      <div className="flex items-center gap-4 flex-col lg:flex-row">
+      <div className="flex items-center gap-8 flex-col lg:flex-row">
         <CollapsibleTrigger asChild>
           <Button
             variant="ghost"
-            className="p-0 flex gap-2 font-semibold text-base min-w-32"
+            className="px-2 flex border-muted border-2 font-semibold text-base min-w-32 justify-between"
           >
             <TagIcon className="h-6 w-6" />
             Tags
             {isOpen ? (
-              <ChevronUp className="h-6 w-6" />
+              <MinusCircle className="h-6 w-6" />
             ) : (
-              <ChevronDown className="h-6 w-6" />
+              <PlusCircle className="h-6 w-6" />
             )}
           </Button>
         </CollapsibleTrigger>
-        {!isOpen && !isLoading && (
+        {!isOpen && !isLoading && !errorLoadingTags && (
           <div className="flex flex-wrap gap-2">
             {tags.length > 0 ? (
               tags.map((tag: string) => (
                 <Badge
                   key={tag}
                   variant="secondary"
-                  className="text-sm py-1 px-3 border border-muted-foreground text-muted-foreground"
+                  className="text-sm py-1 px-3  text-muted-foreground"
                 >
                   {tag}
                 </Badge>
@@ -216,6 +217,9 @@ export default function TagsComponent({ linkId }: TagsComponentProps) {
               <span className="text-sm text-muted-foreground">No tags</span>
             )}
           </div>
+        )}
+        {errorLoadingTags && (
+          <div className="text-destructive">Error loading tags.</div>
         )}
       </div>
 
@@ -228,7 +232,7 @@ export default function TagsComponent({ linkId }: TagsComponentProps) {
               <Badge
                 key={tag}
                 variant="secondary"
-                className="text-sm py-1 px-3 items-center justify-center border border-muted-foreground text-muted-foreground flex gap-2"
+                className="text-sm py-1 px-3 items-center justify-center text-muted-foreground flex gap-2"
               >
                 {tag}
                 <Button
@@ -237,7 +241,7 @@ export default function TagsComponent({ linkId }: TagsComponentProps) {
                   onClick={() => removeTag(tag)}
                   className="ml-1 h-4 w-4 p-0  text-muted-foreground"
                 >
-                  <X className="min-h-6 min-w-6 hover:bg-destructive p-1 rounded-full hover:text-primary" />
+                  <X className="min-h-6 min-w-6 hover:bg-destructive p-1 rounded-full " />
                 </Button>
               </Badge>
             ))}
@@ -257,7 +261,12 @@ export default function TagsComponent({ linkId }: TagsComponentProps) {
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder={`Enter tags separated by commas (${remainingTags} left)`}
+                      placeholder={
+                        remainingTags
+                          ? `Enter tags separated by commas (${remainingTags} left)`
+                          : "5 tags reached."
+                      }
+                      disabled={!remainingTags}
                     />
                   </FormControl>
                 </FormItem>
@@ -282,7 +291,7 @@ export default function TagsComponent({ linkId }: TagsComponentProps) {
           <Button
             onClick={handleSave}
             disabled={updateTagsMutation.isPending || !hasChanges}
-            className="w-32 text-background bg-swappy hover:bg-swappy/90"
+            className="w-32 text-white bg-swappy hover:bg-swappy/90"
           >
             <Save className="mr-2 min-h-4 min-w-4 " />
             {updateTagsMutation.isPending ? <TailwindSpinner /> : "Save Tag(s)"}

@@ -14,6 +14,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
             staleTime: Infinity,
             refetchOnMount: false,
             refetchOnWindowFocus: false,
+            refetchIntervalInBackground: false,
             refetchInterval: Infinity,
           },
         },

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { FcGoogle as Google } from "react-icons/fc";
+import { FaGoogle as Google } from "react-icons/fa";
 import { FaDiscord as Discord } from "react-icons/fa";
 import { FaGithub as Github } from "react-icons/fa";
 import { createClient } from "@/utils/supabase/client";
@@ -18,7 +18,7 @@ export function GoogleLoginComponent() {
   };
   return (
     <Button className="w-full flex gap-3" onClick={loginWithGoogle}>
-      <Google className="text-3xl" />
+      <Google className="text-2xl" />
       <span className="select-none">Continue with Google</span>
     </Button>
   );
@@ -36,7 +36,7 @@ export function DiscordLoginComponent() {
   };
   return (
     <Button className="w-full flex gap-3" onClick={loginWithDiscord}>
-      <Discord className="text-3xl text-[#5865F2]" />
+      <Discord className="text-2xl" />
       <span className="select-none">Continue with Discord</span>
     </Button>
   );
@@ -54,7 +54,7 @@ export function GitHubLoginComponent() {
   };
   return (
     <Button className="w-full flex gap-3" onClick={loginWithGithub}>
-      <Github className="text-3xl" />
+      <Github className="text-2xl" />
       <span className="select-none">Continue with Github</span>
     </Button>
   );

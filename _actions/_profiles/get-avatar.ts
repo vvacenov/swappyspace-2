@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { AVATARS_BASEURL, USER_AVATARS_BASERL } from "@/lib/API/avatar_URLs";
+import xss from "xss";
 
 interface GetAvatarsResult {
   images?: string[];
@@ -13,14 +14,18 @@ export async function getAvatars(
   offset: number,
   userId: string
 ): Promise<GetAvatarsResult> {
+  const supabase = createClient();
+
   try {
-    const supabase = createClient();
     let limit = 6;
     let userImg: string | null = null;
 
+    // Sanitiziraj userId pomoću xss
+    const sanitizedUserId = xss(userId);
+
     if (offset === 0) {
       const { data: userImgList, error: userImgListError } =
-        await supabase.storage.from("user_avatars").list(`${userId}`);
+        await supabase.storage.from("user_avatars").list(`${sanitizedUserId}`);
 
       if (userImgListError) {
         return { message: userImgListError.message, error: true };
@@ -45,7 +50,7 @@ export async function getAvatars(
 
     const imageNames = data.map((img) => AVATARS_BASEURL + img.name);
     if (userImg) {
-      imageNames.unshift(USER_AVATARS_BASERL + `${userId}/` + userImg);
+      imageNames.unshift(USER_AVATARS_BASERL + `${sanitizedUserId}/` + userImg);
     }
 
     return { images: imageNames, error: false };

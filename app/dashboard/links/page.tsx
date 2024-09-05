@@ -1,9 +1,7 @@
 import CreateLinkComponent from "@/components/dashboard/links/create-link/create-link-component";
-import SuspenseLinks from "@/components/dashboard/links/Suspense/suspense-links";
-import GetLinksSSR from "@/components/dashboard/links/view-links/SSR-prefetch-links";
 
+import { GetLinks } from "@/components/dashboard/links/view-links/links";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Suspense } from "react";
 
 export default function LinksPage() {
   return (
@@ -19,9 +17,7 @@ export default function LinksPage() {
         <CreateLinkComponent />
       </TabsContent>
       <TabsContent value="oldLinks">
-        <Suspense fallback={<SuspenseLinks />}>
-          <GetLinksSSR />
-        </Suspense>
+        <GetLinks />
       </TabsContent>
     </Tabs>
   );

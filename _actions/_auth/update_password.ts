@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { PasswordStrengthRgx } from "@/lib/password-strength/password-strength-regex";
+import xss from "xss";
 
 type ServerResponse = {
   message: string;
@@ -20,19 +21,22 @@ const MESSAGES = {
 export const updatePwd = async (
   formData: FormData
 ): Promise<ServerResponse> => {
+  const supabase = createClient();
   try {
-    const password = formData.get("password") as string;
+    const rawPassword = formData.get("password");
 
-    if (!password) {
+    if (!rawPassword) {
       return { message: MESSAGES.emptyPassword, status: 400, error: true };
     }
+
+    // Sanitiziraj lozinku pomoću xss
+    const password = xss(rawPassword as string);
 
     const passwordTest = testPassword(password);
     if (!passwordTest) {
       return { message: MESSAGES.weakPassword, status: 400, error: true };
     }
 
-    const supabase = createClient();
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {

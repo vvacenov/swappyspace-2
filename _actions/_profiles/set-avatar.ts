@@ -1,6 +1,7 @@
 "use server";
 import { createClient } from "@/utils/supabase/server";
 import { AvatarURLTest } from "@/lib/zod-schemas/update-profile-schema";
+import xss from "xss";
 
 type ServerError = {
   error_message: string;
@@ -16,21 +17,25 @@ export async function setAvatar(
   url: string,
   userId: string
 ): Promise<AvatarResponse> {
+  const supabase = createClient();
   try {
-    if (!url) {
+    // Sanitiziraj URL i userId pomoću xss
+    const sanitizedUrl = xss(url);
+    const sanitizedUserId = xss(userId);
+
+    if (!sanitizedUrl) {
       return {
         serverError: { error_message: "Invalid URL", code: 400 },
       };
     }
 
-    const test = AvatarURLTest.safeParse({ url: url });
+    const test = AvatarURLTest.safeParse({ url: sanitizedUrl });
 
     if (!test.success) {
       return {
         serverError: { error_message: "Invalid URL", code: 400 },
       };
     }
-    const supabase = createClient();
 
     const { data: userData } = await supabase.auth.getUser();
 
@@ -39,16 +44,17 @@ export async function setAvatar(
         serverError: { error_message: "Unauthorized", code: 401 },
       };
     }
-    if (userData.user.id !== userId) {
+    if (userData.user.id !== sanitizedUserId) {
       return {
         serverError: { error_message: "Unauthorized", code: 401 },
       };
     }
     const { error, data } = await supabase
       .from("profiles")
-      .update({ avatar_url: url })
-      .eq("id", userId)
+      .update({ avatar_url: sanitizedUrl })
+      .eq("id", sanitizedUserId)
       .single();
+
     if (error) {
       return {
         serverError: { error_message: error.message, code: 500 },

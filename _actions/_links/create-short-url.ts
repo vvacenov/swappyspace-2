@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { EncodeShortURL } from "@/lib/URLs/shorten-url";
 import { SHORTENER_BASEURL } from "@/lib/URLs/shortener_base_url";
 import { z } from "zod";
+import xss from "xss";
 
 const inputSchema = z.object({
   long_url: z.string().url("Please enter a valid URL"),
@@ -11,8 +12,9 @@ const inputSchema = z.object({
 });
 
 export async function createShortUrl(formData: FormData) {
-  const long_url = formData.get("long_url") as string;
-  const antibot = formData.get("antibot") as string;
+  // Sanitiziraj unose pomoću xss
+  const long_url = xss(formData.get("long_url") as string);
+  const antibot = xss(formData.get("antibot") as string);
 
   try {
     const validatedInput = inputSchema.parse({ long_url, antibot });

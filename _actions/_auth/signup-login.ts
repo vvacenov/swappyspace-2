@@ -7,7 +7,11 @@ import { createClient } from "@/utils/supabase/server";
 import { PasswordStrengthRgx } from "@/lib/password-strength/password-strength-regex";
 import { testEmail } from "@/lib/zod-schemas/signup-zod-schema";
 import { checkEmail } from "./check-user-email";
-import { SiteNavigation } from "@/lib/site-navigation/site-navigation";
+import {
+  ProtectedSiteNavigation,
+  SiteNavigation,
+} from "@/lib/site-navigation/site-navigation";
+import xss from "xss";
 
 type ServerError = {
   message: string;
@@ -27,10 +31,12 @@ const MESSAGES = {
 };
 
 export async function logIn(formData: FormData): Promise<ServerError | null> {
+  let shouldRedirect = false;
+  const supabase = createClient();
   try {
     const data = {
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
+      email: xss(formData.get("email") as string),
+      password: xss(formData.get("password") as string),
     };
 
     if (!data.email) {
@@ -42,7 +48,6 @@ export async function logIn(formData: FormData): Promise<ServerError | null> {
       return { message: MESSAGES.invalidEmail, status: 400, error: true };
     }
 
-    const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword(data);
 
     if (error) {
@@ -54,18 +59,23 @@ export async function logIn(formData: FormData): Promise<ServerError | null> {
       };
     }
 
-    revalidatePath("/", "layout");
-    redirect("/dashboard");
+    shouldRedirect = true;
   } catch (err) {
     return handleServerError(err);
+  } finally {
+    revalidatePath("/", "layout");
+    redirect(ProtectedSiteNavigation._DASHBOARD_);
   }
 }
 
 export async function signUp(formData: FormData): Promise<ServerError | null> {
+  let shouldRedirect = false;
+  const supabase = createClient();
+
   try {
     const data = {
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
+      email: xss(formData.get("email") as string),
+      password: xss(formData.get("password") as string),
     };
 
     const emailTest = testEmailInput(data.email);
@@ -82,24 +92,33 @@ export async function signUp(formData: FormData): Promise<ServerError | null> {
     if ("error" in result && result.error) {
       return { message: MESSAGES.signUpError, status: 500, error: true };
     }
+    console.log(result);
 
     if ("exists" in result && result.exists) {
       return { message: MESSAGES.emailTaken, status: 409, error: true };
     }
 
-    const supabase = createClient();
     const { error } = await supabase.auth.signUp(data);
 
     if (error) {
       return { message: error.message, status: 500, error: true };
     }
 
+    console.log(error);
     cookies().set("emailSent", "true", { path: "/", maxAge: 60 * 5 });
 
-    revalidatePath("/", "layout");
-    redirect(SiteNavigation.confirmEmailSent);
+    shouldRedirect = true;
+    return null; // Indicates success
   } catch (err) {
+    if (err instanceof Error && err.message === "NEXT_REDIRECT") {
+      throw err; // Re-throw NEXT_REDIRECT error
+    }
     return handleServerError(err);
+  } finally {
+    if (shouldRedirect) {
+      revalidatePath("/", "layout");
+      redirect(SiteNavigation.confirmEmailSent);
+    }
   }
 }
 

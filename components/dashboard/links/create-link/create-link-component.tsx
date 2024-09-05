@@ -18,7 +18,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { X, Clipboard, LucideQrCode, QrCodeIcon } from "lucide-react";
+import { X, Clipboard, QrCodeIcon } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -27,14 +27,7 @@ import {
 } from "@/components/ui/tooltip";
 import TagsComponent from "../tags/tags-component";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { initFilter, linksFilterAtom } from "@/lib/atoms/search";
 
 import CreateQrComponent from "../../QR-code/create-qr-component";
 
@@ -47,6 +40,8 @@ export default function CreateLinkComponent() {
   const [error, setError] = useState<null | string>(null);
   const [state, setState] = useAtom(shortLinkAtom);
   const [shouldReset, setShouldReset] = useState(false);
+  const [, resetFilter] = useAtom(linksFilterAtom);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -84,8 +79,23 @@ export default function CreateLinkComponent() {
     } else {
       setIsSubmitting(false);
       setState({ created: true, short_url: result.message, long_url: testURL });
-      queryClient.refetchQueries({ queryKey: ["links"] });
-      return;
+      resetFilter(initFilter);
+      try {
+        await queryClient.invalidateQueries({
+          queryKey: ["links"],
+        });
+        await queryClient.refetchQueries({
+          queryKey: ["links"],
+        });
+        return;
+      } catch (err) {
+        toast({
+          variant: "destructive",
+          title: "Error with the new link!",
+          description:
+            "Link was saved, but server did not respond correctly. Try refreshing the page.",
+        });
+      }
     }
   }
 
@@ -145,23 +155,23 @@ export default function CreateLinkComponent() {
               }}
               className="absolute top-2 right-2 w-12 h-12 text-muted-foreground border-muted-foreground border-2 rounded-full p-1 hover:bg-muted cursor-pointer"
             />
-            <CardContent className="py-6 lg:py-0 lg:pb-8">
+            <CardContent className="pb-6  flex items-center justify-center md:justify-start">
               <div>
-                <QrCodeIcon className="min-w-14 min-h-14 p-1 border-2 border-muted-foreground rounded-md cursor-pointer text-muted-foreground hover:bg-muted"></QrCodeIcon>
+                <QrCodeIcon className="min-h-14 min-w-14 md:min-w-20 md:min-h-20 p-1 border-2 border-muted-foreground rounded-md cursor-pointer text-swappy hover:bg-muted"></QrCodeIcon>
               </div>
             </CardContent>
-
+            <Separator className="mb-6" />
             <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-[auto,1fr] gap-4 lg:gap-8 items-center">
-                <span className="font-semibold min-w-32 text-muted-foreground">
-                  Short link:{" "}
-                </span>
-                <div className="flex items-center space-x-2">
+              <div className="grid grid-cols-1 lg:grid-cols-[auto,1fr] gap-4 lg:gap-8 justify-center">
+                <div className="flex font-semibold min-w-32 text-muted-foreground md:justify-start justify-center items-center">
+                  <p>Short link </p>
+                </div>
+                <div className="flex items-center gap-4 md:flex-row flex-col">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <a href={"http://" + state.short_url}>
-                          <Button className="select-text rounded-md text-background bg-swappy hover:bg-swappy/90 py-2 px-6 text-xl hover:underline w-60">
+                          <Button className="select-text rounded-md text-background bg-swappy hover:bg-swappy/90 py-2 px-6 text-xl hover:underline lg:w-60">
                             <span>{state.short_url}</span>
                           </Button>
                         </a>
@@ -198,16 +208,16 @@ export default function CreateLinkComponent() {
                 </div>
               </div>
             </CardContent>
-            <Separator />
+
             <CardContent className="px-6 py-0">
-              <div className="grid grid-cols-1 lg:grid-cols-[auto,1fr] gap-4 lg:gap-8 items-center py-8">
-                <span className="font-semibold min-w-32 text-muted-foreground">
-                  Destination:
-                </span>
+              <div className="grid grid-cols-1 lg:grid-cols-[auto,1fr] gap-4 lg:gap-8 items-center pb-8">
+                <div className="flex font-semibold min-w-32 text-muted-foreground md:justify-start justify-center items-center">
+                  <p>Destination </p>
+                </div>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="text-muted-foreground lg:line-clamp-1 line-clamp-3 text-base overflow-hidden max-w-full hover:underline underline-offset-4 cursor-pointer font-semibold">
+                      <span className="text-muted-foreground justify-self-center md:justify-self-start lg:line-clamp-1 line-clamp-3 text-base overflow-hidden max-w-full hover:underline underline-offset-4 cursor-pointer font-semibold">
                         {state.long_url}
                       </span>
                     </TooltipTrigger>
@@ -221,8 +231,8 @@ export default function CreateLinkComponent() {
                 </TooltipProvider>
               </div>
             </CardContent>
-            <Separator />
-            <CardFooter className="py-12 rounded-xl border-none w-full">
+
+            <CardFooter className="pb-8 rounded-xl border-none w-full">
               <TagsComponent linkId={state.short_url} />
             </CardFooter>
           </div>

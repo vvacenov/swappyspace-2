@@ -2,19 +2,31 @@
 
 import { DecodeShortURL } from "@/lib/URLs/shorten-url";
 import { createClient } from "@/utils/supabase/server";
+import xss from "xss";
 
 export async function deleteLink(linkId: string) {
-  // await sleep(4000);
-  // throw new Error("Errorrrrrrr");
   const supabase = createClient();
-  const linkIdLocal = DecodeShortURL(linkId);
-  console.log(linkIdLocal as number);
+
+  // Sanitiziraj linkId koristeći xss
+  const sanitizedLinkId = xss(linkId);
+
+  // Dekodiraj i validiraj linkId
+  const linkIdLocal = DecodeShortURL(sanitizedLinkId);
+
+  // Provjeri je li linkId broj nakon dekodiranja
+  if (isNaN(Number(linkIdLocal))) {
+    throw new Error("Invalid link ID format");
+  }
+
+  console.log(linkIdLocal);
+
   const { error } = await supabase
     .from("url")
     .delete()
-    .eq("id", linkIdLocal as number);
+    .eq("id", Number(linkIdLocal));
 
   if (error) throw error;
+
   return { success: true };
 }
 

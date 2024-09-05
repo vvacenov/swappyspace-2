@@ -1,6 +1,7 @@
 "use server";
 
 import { createServiceClient } from "@/utils/supabase/service-server";
+import xss from "xss";
 
 type ServerError = {
   message: string;
@@ -19,8 +20,12 @@ type CheckEmailResponse =
 export async function checkEmail(email: string): Promise<CheckEmailResponse> {
   try {
     const supabase = createServiceClient();
+
+    // Sanitiziraj email pomoću xss
+    const sanitizedEmail = xss(email);
+
     const { data, error } = await supabase.rpc("check_email_exists", {
-      user_email: email,
+      user_email: sanitizedEmail,
     });
 
     if (error) {

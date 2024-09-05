@@ -7,6 +7,7 @@ import {
   profileWebsiteTest,
   profileEmailTest,
 } from "@/lib/zod-schemas/update-profile-schema";
+import xss from "xss";
 
 type ServerError = {
   error_message: string;
@@ -21,8 +22,8 @@ type ProfileUpdateResponse = {
 export async function updateUserProfile(
   updates: UserProfileUpdate
 ): Promise<ProfileUpdateResponse> {
+  const supabase = createClient();
   try {
-    const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
 
     if (!userData?.user) {
@@ -31,7 +32,15 @@ export async function updateUserProfile(
       };
     }
 
-    const { ...allowedUpdates } = updates;
+    // Sanitizacija unosa pomoću xss
+    const sanitizedUpdates: UserProfileUpdate = {
+      ...updates,
+      website: updates.website ? xss(updates.website) : undefined,
+      full_name: updates.full_name ? xss(updates.full_name) : undefined,
+      email: updates.email ? xss(updates.email) : undefined,
+    };
+
+    const { ...allowedUpdates } = sanitizedUpdates;
 
     if (allowedUpdates.website) {
       const result = profileWebsiteTest.safeParse({

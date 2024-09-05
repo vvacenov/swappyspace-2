@@ -24,11 +24,9 @@ import { updateUserProfile } from "@/_actions/_profiles/update-profile";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import TailwindSpinner from "../ui/spinner/tailwind-spinner";
 import AvatarGallery from "./profile-avatars/avatars-gallery-component";
-
 import AvatarUpload from "@/components/profile/uploads/avatar-upload-component";
 import ProfileFallbackImage from "@/public/logo/swappyspace-round.svg";
 import Image from "next/image";
-
 import { useSetAtom } from "jotai";
 import { loggedInAtom } from "@/lib/atoms/auth";
 
@@ -230,6 +228,12 @@ const Profile: React.FC = () => {
     []
   );
 
+  const iconClass = "w-6 h-6 text-swappy";
+  const iconContainerClass = "flex items-center justify-center w-10";
+  const inputClass = "h-7 p-0 pl-2 focus-visible:ring-swappy w-[272px]";
+  const rowClass =
+    "select-none grid grid-flow-col gap-4 min-h-10 justify-start items-center px-3 hover:bg-muted rounded text-sm cursor-pointer";
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger onClick={() => dispatch({ type: "TOGGLE_EDITING" })}>
@@ -282,7 +286,7 @@ const Profile: React.FC = () => {
                 });
               }}
             >
-              <Edit className="w-12 h-12 p-1 text-swappy" />
+              <Edit className={iconClass} />
               <span className="text-swappy">Change avatar</span>
             </div>
           )}
@@ -290,7 +294,7 @@ const Profile: React.FC = () => {
             <div className="select-none relative p-3 border rounded-md w-[266px] min-h-[110px] max-h-auto flex flex-col items-center justify-center z-12">
               <div className="absolute -top-3 -right-2 border-2 rounded-full w-10 h-10 p-1 hover:cursor-pointer bg-primary-foreground hover:text-swappy hover:bg-muted z-1000 flex items-center justify-center">
                 <X
-                  className="z-30"
+                  className={`${iconClass} z-30`}
                   onClick={() =>
                     dispatch({
                       type: "TOGGLE_AVATAR",
@@ -308,135 +312,113 @@ const Profile: React.FC = () => {
           )}
         </DropdownMenuLabel>
 
-        <DropdownMenuSeparator />
         {!avatar && (
           <>
-            <DropdownMenuLabel className="select-none flex gap-6 items-center">
-              <div className="flex gap-2 items-center select-none">
-                <Edit
-                  className={`min-h-12 min-w-12 p-1 cursor-pointer transition-all ease-in-out duration-100 ${
-                    isEditing ? "text-swappy" : "hover:opacity-60"
-                  }`}
-                  onClick={() => dispatch({ type: "TOGGLE_EDITING" })}
-                />
-                {!isEditing && <span>Edit details</span>}
+            <div
+              className={rowClass}
+              onClick={() => dispatch({ type: "TOGGLE_EDITING" })}
+            >
+              <div className={iconContainerClass}>
+                <Edit className={iconClass} />
               </div>
+              <span>{isEditing ? "Editing details" : "Edit details"}</span>
               {isEditing && (
-                <div className="flex w-full select-none">
-                  <div className="flex items-center justify-start gap-6">
-                    <div className="w-10 h-10 flex items-center justify-center">
-                      <Check
-                        className="text-green-500 min-w-9 min-h-9 p-1 rounded-md hover:bg-muted cursor-pointer border-2 border-swappy"
-                        onClick={handleConfirm}
-                      />
-                    </div>
-                    <div className="w-10 h-10 flex items-center justify-center">
-                      <X
-                        className="text-red-500 min-w-9 min-h-9 p-1 rounded-md hover:bg-muted cursor-pointer border-2 border-swappy"
-                        onClick={handleCancel}
-                      />
-                    </div>
+                <div className="flex items-center justify-end gap-4 ml-auto">
+                  <div className={iconContainerClass}>
+                    <Check
+                      className={`${iconClass} text-green-500`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleConfirm();
+                      }}
+                    />
+                  </div>
+                  <div className={iconContainerClass}>
+                    <X
+                      className={`${iconClass} text-red-500`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancel();
+                      }}
+                    />
                   </div>
                 </div>
               )}
-            </DropdownMenuLabel>
-
-            <DropdownMenuSeparator />
+            </div>
 
             <div
-              className="select-none grid grid-flow-col gap-3 min-h-10 justify-start items-center pl-4 px-3 hover:bg-muted rounded text-sm"
+              className={rowClass}
               onDoubleClick={() => handleDoubleClick(nameInputRef)}
             >
-              <span className="h-7 select-none">
-                <User2 className="text-swappy w-7 h-7 select-none" />
-              </span>
+              <div className={iconContainerClass}>
+                <User2 className={iconClass} />
+              </div>
               {isEditing ? (
-                <div className="select-none">
-                  <Input
-                    ref={nameInputRef}
-                    className="h-7 p-0 pl-2 focus-visible:ring-swappy w-[272px]"
-                    value={name}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "SET_DATA",
-                        payload: { name: e.target.value },
-                      })
-                    }
-                    onKeyDown={handleKeyDown}
-                  />
-                </div>
+                <Input
+                  ref={nameInputRef}
+                  className={inputClass}
+                  value={name}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "SET_DATA",
+                      payload: { name: e.target.value },
+                    })
+                  }
+                  onKeyDown={handleKeyDown}
+                />
               ) : (
-                <span
-                  onDoubleClick={() => handleDoubleClick(nameInputRef)}
-                  className="break-words truncate"
-                >
-                  {name || ""}
-                </span>
+                <span className="break-words truncate">{name || ""}</span>
               )}
             </div>
 
             <div
-              className="grid select-none grid-flow-col gap-3 min-h-10 justify-start items-center pl-4 px-3 hover:bg-muted rounded text-sm"
+              className={rowClass}
               onDoubleClick={() => handleDoubleClick(emailInputRef)}
             >
-              <span className="h-7">
-                <Mail className="text-swappy w-7 h-7" />
-              </span>
+              <div className={iconContainerClass}>
+                <Mail className={iconClass} />
+              </div>
               {isEditing ? (
-                <div>
-                  <Input
-                    ref={emailInputRef}
-                    className="h-7 p-0 pl-2 focus-visible:ring-swappy w-[272px]"
-                    value={email}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "SET_DATA",
-                        payload: { email: e.target.value },
-                      })
-                    }
-                    onKeyDown={handleKeyDown}
-                  />
-                </div>
+                <Input
+                  ref={emailInputRef}
+                  className={inputClass}
+                  value={email}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "SET_DATA",
+                      payload: { email: e.target.value },
+                    })
+                  }
+                  onKeyDown={handleKeyDown}
+                />
               ) : (
-                <span
-                  onDoubleClick={() => handleDoubleClick(emailInputRef)}
-                  className=" break-words truncate"
-                >
-                  {email || ""}
-                </span>
+                <span className="break-words truncate">{email || ""}</span>
               )}
             </div>
 
             <div
-              className="select-none grid grid-flow-col gap-3 min-h-10 justify-start items-center pl-4 px-3 hover:bg-muted rounded text-sm"
+              className={rowClass}
               onDoubleClick={() => handleDoubleClick(websiteInputRef)}
             >
-              <span className="h-7">
-                <Globe className="text-swappy w-7 h-7" />
-              </span>
+              <div className={iconContainerClass}>
+                <Globe className={iconClass} />
+              </div>
               {isEditing ? (
-                <div>
-                  <Input
-                    ref={websiteInputRef}
-                    className="h-7 p-0 pl-2 w-[272px] focus-visible:ring-swappy"
-                    value={website}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "SET_DATA",
-                        payload: { website: e.target.value },
-                      })
-                    }
-                    placeholder="https://"
-                    onKeyDown={handleKeyDown}
-                  />
-                </div>
+                <Input
+                  ref={websiteInputRef}
+                  className={inputClass}
+                  value={website}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "SET_DATA",
+                      payload: { website: e.target.value },
+                    })
+                  }
+                  placeholder="https://"
+                  onKeyDown={handleKeyDown}
+                />
               ) : (
-                <span
-                  onDoubleClick={() => handleDoubleClick(websiteInputRef)}
-                  className="break-words truncate"
-                >
-                  {website || ""}
-                </span>
+                <span className="break-words truncate">{website || ""}</span>
               )}
             </div>
 
@@ -466,13 +448,12 @@ const Profile: React.FC = () => {
           </>
         )}
 
-        <DropdownMenuItem
-          className="select-none flex gap-3 cursor-pointer text-base font-semibold hover:bg-muted"
-          onClick={handleLogout}
-        >
-          <LogOut className="text-swappy min-h-12 min-w-12 p-1" />
+        <div className={rowClass} onClick={handleLogout}>
+          <div className={iconContainerClass}>
+            <LogOut className={iconClass} />
+          </div>
           <span>Log out</span>
-        </DropdownMenuItem>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
