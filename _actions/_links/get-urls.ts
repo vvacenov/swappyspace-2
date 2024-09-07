@@ -64,7 +64,7 @@ export async function getLinks(filter: LinksFilter): Promise<Link[]> {
     if (searchFilter.tags && searchFilter.tags.length > 0) {
       if (searchFilter.excat_tags) {
         // exact match tags
-        query.containedBy("tags", searchFilter.tags);
+        query.contains("tags", searchFilter.tags);
       } else {
         // partial match tags
         query.overlaps("tags", searchFilter.tags);

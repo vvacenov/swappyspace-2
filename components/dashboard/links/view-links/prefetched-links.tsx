@@ -8,6 +8,7 @@ import { useAtomValue } from "jotai";
 import { showHideSearchAtom } from "@/lib/atoms/show-hide-search-panel-links";
 import SearchLinksPanel from "../search-links/search-panel-component";
 import { linksFilterAtom } from "@/lib/atoms/search";
+import { Separator } from "@/components/ui/separator";
 
 type Link = {
   id: string;
@@ -33,10 +34,13 @@ export default function PrefetchedLinks() {
   }
 
   if (error) {
-    console.log(error);
     return (
       <>
-        {searchPanel && <SearchLinksPanel />}
+        {searchPanel && (
+          <div className="w-full p-1 bg-muted rounded-xl">
+            <SearchLinksPanel />
+          </div>
+        )}
         <div className="flex items-center justify-center py-4">
           <p className="text-destructive text-xl">
             Error loading links. Please try again later.
@@ -49,7 +53,11 @@ export default function PrefetchedLinks() {
   if (!data || data.length === 0) {
     return (
       <>
-        {searchPanel && <SearchLinksPanel />}
+        {searchPanel && (
+          <div className="w-full p-1 bg-muted rounded-xl">
+            <SearchLinksPanel />
+          </div>
+        )}
         <div>
           {search.created_at ||
           search.id ||
@@ -65,7 +73,11 @@ export default function PrefetchedLinks() {
   if (data[0]?.id === "empty") {
     return (
       <>
-        {searchPanel && <SearchLinksPanel />}
+        {searchPanel && (
+          <div className="w-full p-1 bg-muted rounded-xl">
+            <SearchLinksPanel />
+          </div>
+        )}
         <div>No links found.</div>
       </>
     );
@@ -73,15 +85,23 @@ export default function PrefetchedLinks() {
 
   return (
     <>
-      {searchPanel && <SearchLinksPanel />}
+      {searchPanel && (
+        <div className="w-full p-1 bg-muted rounded-xl">
+          <SearchLinksPanel />
+        </div>
+      )}
+      <Separator />
       <CustomScrollArea
         className={
-          !searchPanel ? `h-[calc(100vh-266px)]` : `h-[calc(100vh-456px)]`
+          !searchPanel ? `h-[calc(100vh-283px)]` : `h-[calc(100vh-430px)]`
         }
       >
         <div className="flex flex-col gap-8 pb-2">
           {data.map((link: Link) => (
-            <SingleLinkComponent key={link.id} data={link} />
+            <div key={link.id}>
+              <SingleLinkComponent data={link} />
+              <Separator />
+            </div>
           ))}
         </div>
       </CustomScrollArea>
