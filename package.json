@@ -51,6 +51,7 @@
     "jotai-tanstack-query": "^0.8.5",
     "lodash": "^4.17.21",
     "lucide-react": "^0.397.0",
+    "micromatch": "^4.0.8",
     "nanoid": "^5.0.7",
     "next": "14.2.4",
     "next-connect": "^1.0.0",
