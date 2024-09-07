@@ -90,7 +90,7 @@ export default function SingleLinkComponent({ data }: Props) {
 
   return (
     <div className="relative">
-      <Card className="w-full max-w-5xl mx-auto text-muted-foreground py-4 border-none shadow-none hover:bg-muted/30">
+      <Card className="w-full max-w-5xl mx-auto text-muted-foreground py-4 border-none shadow-none hover:bg-muted/30 hover:shadow-sm">
         <CardHeader className="pt-0 pb-4">
           <CardTitle className="flex flex-col lg:flex-row lg:justify-between">
             <div className="flex items-center text-base justify-between w-full gap-6 flex-col lg:flex-row">

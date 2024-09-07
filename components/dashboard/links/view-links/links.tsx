@@ -11,7 +11,7 @@ export function GetLinks() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex gap-2 items-center justify-end mr-4 lg:mr-8">
-        <span className="text-sm font-bold ">Search panel</span>
+        <span className="text-sm font-bold ">Search options</span>
         <Switch
           checked={checked}
           onCheckedChange={() => setChecked(!checked)}

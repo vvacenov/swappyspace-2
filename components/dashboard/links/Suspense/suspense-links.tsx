@@ -17,3 +17,28 @@ export const SkeletonArmy = () => {
 export default function SuspenseLinks() {
   return <SkeletonArmy />;
 }
+
+export const SkeletonArmyTags = () => {
+  return (
+    <ul className="flex flex-col gap-2">
+      <li>
+        <Skeleton className="min-w-full min-h-[25px] rounded-md" />
+      </li>
+      <li>
+        <Skeleton className="min-w-full min-h-[25px] rounded-md" />
+      </li>
+      <li>
+        <Skeleton className="min-w-full min-h-[25px] rounded-md" />
+      </li>
+      <li>
+        <Skeleton className="min-w-full min-h-[25px] rounded-md" />
+      </li>
+      <li>
+        <Skeleton className="min-w-full min-h-[25px] rounded-md" />
+      </li>
+      <li>
+        <Skeleton className="min-w-full min-h-[25px] rounded-md" />
+      </li>
+    </ul>
+  );
+};

@@ -96,11 +96,11 @@ export default function PrefetchedLinks() {
           !searchPanel ? `h-[calc(100vh-283px)]` : `h-[calc(100vh-430px)]`
         }
       >
-        <div className="flex flex-col gap-8 pb-2">
+        <div className="flex flex-col gap-2 pb-2">
           {data.map((link: Link) => (
             <div key={link.id}>
               <SingleLinkComponent data={link} />
-              <Separator />
+              <Separator className="mt-2" />
             </div>
           ))}
         </div>
